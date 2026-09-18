@@ -1,2240 +1,2182 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Starpath Jeopardy</title>
-
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #050515;
-      --blue: #061cb0;
-      --gold: #f6c85b;
-      --white: #fffaf0;
-      --muted: #c1c4e4;
-      --black: #02020c;
-
-      /* Exact fonts are used when installed on the viewing computer. */
-      --clue-font: "ITC Korinna", "ITC Korinna Std", "Korinna Std",
-        "Korinna BT", Georgia, "Times New Roman", serif;
-      --board-font: "Swiss 921 BT", "Swiss 911 BT", "Swiss 921",
-        "Swiss 911", Impact, "Arial Narrow", sans-serif;
-
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 16px;
-    }
-
-    * { box-sizing: border-box; }
-    body { margin: 0; color: var(--white); background: var(--bg); }
-    button, input, select { font: inherit; }
-
-    button {
-      cursor: pointer;
-      background: #0c177d;
-      border: 1px solid #7473b4;
-      color: var(--white);
-      padding: 11px 18px;
-      font-weight: 700;
-      border-radius: 2px;
-    }
-
-    button:hover:not(:disabled) { background: #253ece; }
-    button:disabled { opacity: .4; cursor: default; }
-
-    button:focus-visible,
-    input:focus-visible,
-    select:focus-visible,
-    a:focus-visible,
-    summary:focus-visible {
-      outline: 3px solid var(--gold);
-      outline-offset: 4px;
-    }
-
-    input, select {
-      background: #050e58;
-      color: var(--white);
-      border: 1px solid #a5a0ce;
-      padding: 10px;
-      min-width: 0;
-      border-radius: 0;
-    }
-
-    a { color: var(--gold); }
-
-    .game {
-      max-width: 1680px;
-      margin: auto;
-      padding: 22px 34px 20px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 0 6px 16px;
-      border-bottom: 3px double #c8b584;
-    }
-
-    .brand h1 {
-      font-family: Impact, "Arial Narrow", Arial, sans-serif;
-      font-size: 3.05rem;
-      line-height: 1;
-      letter-spacing: .025em;
-      font-weight: 900;
-      margin: 0;
-      text-shadow: 3px 3px 0 #373d98, 5px 5px 0 #000;
-    }
-
-    .brand small {
-      display: block;
-      font-family: Arial, sans-serif;
-      font-size: .75rem;
-      letter-spacing: .38em;
-      color: var(--gold);
-      margin-bottom: 6px;
-      text-shadow: none;
-    }
-
-    nav { display: flex; gap: 5px; align-items: center; }
-
-    .quiet {
-      background: transparent;
-      border-color: transparent;
-      color: var(--muted);
-      font-size: .875rem;
-    }
-
-    .icon-button {
-      background: transparent;
-      border-color: transparent;
-      font-size: 1.8rem;
-      padding: 0 9px;
-    }
-
-    .primary {
-      background: var(--gold);
-      color: #0b114c;
-      border-color: #ffe2a2;
-      box-shadow: 2px 2px 0 #826423;
-    }
-
-    .primary:hover:not(:disabled) { background: #ffdf8d; }
-
-    .round-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 16px 4px 12px;
-      font-size: .8rem;
-      letter-spacing: .13em;
-      color: var(--muted);
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 6px;
-      background: var(--black);
-      padding: 7px;
-      border: 3px double #a49a73;
-      box-shadow: 0 0 0 4px #101025, 0 7px 0 #010109;
-    }
-
-    .category {
-      display: grid;
-      grid-template-rows:
-        69px repeat(5, minmax(53px, calc((100dvh - 460px) / 5)));
-      gap: 6px;
-    }
-
-    .category h2 {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      min-width: 0;
-      padding: 9px;
-      margin: 0;
-      background: var(--blue);
-      color: var(--white);
-      font-family: var(--board-font);
-      font-stretch: condensed;
-      font-size: clamp(1rem, 1.6vw, 1.45rem);
-      font-weight: 400;
-      line-height: 1.1;
-      text-transform: uppercase;
-      text-shadow: 2px 2px #020332;
-      border-bottom: 2px solid #03072e;
-    }
-
-    .tile {
-      background: linear-gradient(180deg, #091fb0, #071897);
-      color: var(--gold);
-      border: 0;
-      box-shadow: inset 0 0 0 1px #243abe;
-      font-family: var(--board-font);
-      font-size: clamp(1.8rem, 3.1vw, 3.2rem);
-      line-height: 1;
-      font-weight: 400;
-      text-shadow: 3px 3px 0 #000;
-      padding: 8px;
-      border-radius: 0;
-    }
-
-    .tile:hover:not(:disabled) { background: #1a33d0; }
-
-    .tile.used:disabled {
-      opacity: 1;
-      background: #061584;
-      box-shadow: inset 0 0 0 1px #11259d;
-    }
-
-    .scores {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 24px;
-    }
-
-    .score-card {
-      text-align: center;
-      min-width: 0;
-      border: 3px double #aea082;
-      background: #07145f;
-      box-shadow: 3px 4px 0 #000;
-      padding: 9px 14px;
-    }
-
-    .score-name {
-      display: block;
-      color: var(--gold);
-      font-size: .88rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      overflow-wrap: anywhere;
-    }
-
-    .score-value {
-      display: block;
-      font-family: var(--board-font);
-      font-weight: 400;
-      font-size: 1.85rem;
-      line-height: 1.2;
-      margin-top: 5px;
-      text-shadow: 2px 2px #000;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .negative { color: #ffaca0; }
-
-    footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-top: 17px;
-    }
-
-    footer > div { display: flex; gap: 8px; }
-
-    .notice {
-      position: fixed;
-      bottom: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 20px;
-      background: var(--gold);
-      color: #07104c;
-      border: 2px solid #fff1bc;
-      z-index: 20;
-      max-width: 90vw;
-      box-shadow: 4px 4px #0008;
-      font-weight: 600;
-    }
-
-    .notice:empty { display: none; }
-
-    dialog {
-      background: var(--blue);
-      color: var(--white);
-      border: 4px double #c4b48c;
-      box-shadow: 0 0 0 7px #03031b, 8px 12px 40px #000b;
-      border-radius: 0;
-      padding: 0;
-      max-height: 94dvh;
-      overflow: auto;
-    }
-
-    dialog::backdrop { background: #020214e8; }
-    .clue-dialog { width: min(1160px, 94vw); }
-
-    .clue-top,
-    .clue-controls,
-    .panel-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 16px 24px;
-      border-bottom: 1px solid #7a7aba;
-    }
-
-    .eyebrow {
-      font-size: .875rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      color: var(--gold);
-      line-height: 1.35;
-    }
-
-    .clue-top .quiet { color: #ebe7fa; }
-
-    .clue-body {
-      padding: 24px 44px 23px;
-      text-align: center;
-      min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .clue-text {
-      font-family: var(--clue-font);
-      font-size: clamp(1.5rem, 3vw, 2.5rem);
-      font-weight: 700;
-      line-height: 1.32;
-      text-transform: uppercase;
-      text-shadow: 2px 3px #020340;
-      margin: 14px 0 22px;
-      text-wrap: balance;
-    }
-
-    .clue-text.special-title {
-      font-family: Impact, "Arial Narrow", Arial, sans-serif;
-      font-size: clamp(2.4rem, 5vw, 4rem);
-      letter-spacing: .025em;
-      color: var(--gold);
-      text-shadow: 3px 4px #000;
-      line-height: 1.1;
-    }
-
-    .answer-text {
-      font-family: var(--clue-font);
-      font-size: clamp(1.3rem, 2.4vw, 2rem);
-      color: var(--gold);
-      margin: 14px 0;
-      line-height: 1.35;
-    }
-
-    #answerPanel {
-      border-top: 1px solid #686bbc;
-      padding-top: 8px;
-    }
-
-    details {
-      font-size: .875rem;
-      line-height: 1.55;
-      color: var(--muted);
-    }
-
-    summary {
-      cursor: pointer;
-      display: list-item;
-      list-style-position: inside;
-    }
-
-    .award-row {
-      display: flex;
-      gap: 11px;
-      flex-wrap: wrap;
-      padding: 0 24px 22px;
-    }
-
-    .award-team {
-      flex: 1;
-      min-width: 155px;
-      border: 2px double #9590b9;
-      background: #061775;
-      padding: 12px;
-    }
-
-    .team-score-heading {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 9px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      font-size: .9rem;
-    }
-
-    .team-score-heading strong {
-      color: var(--gold);
-      overflow-wrap: anywhere;
-    }
-
-    .team-score-heading span {
-      font-family: var(--board-font);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .money-controls { display: flex; gap: 7px; }
-
-    .money-controls button {
-      font-family: var(--board-font);
-      font-weight: 400;
-      flex: 1;
-      font-size: 1.05rem;
-      padding: 10px 5px;
-      background: #030e5a;
-      border-color: #696cb0;
-    }
-
-    .positive { color: #b9f7c5; }
-    .negative-button { color: #ffc6b8; }
-
-    .clue-controls {
-      border-bottom: 0;
-      border-top: 1px solid #7a7aba;
-      padding: 15px 24px;
-    }
-
-    .reveal-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .countdown {
-      height: 10px;
-      margin: 24px 44px 0;
-      background: #ffffff26;
-      overflow: hidden;
-    }
-
-    .countdown-fill {
-      height: 100%;
-      width: 100%;
-      background: #fff;
-      transform-origin: left center;
-    }
-
-    .panel-dialog {
-      width: min(700px, 94vw);
-      background: #081665;
-    }
-
-    .panel-top h2 { font-size: 1.4rem; margin: 0; }
-    .panel-top .quiet { font-size: 1.3rem; }
-
-    #panelContent {
-      padding: 22px 26px 28px;
-      line-height: 1.55;
-    }
-
-    .field {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .field input[type="text"] { width: calc(100% - 115px); }
-    .field input[type="number"] { width: 100px; }
-
-    .team-field-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: .9rem;
-      margin-bottom: 8px;
-    }
-
-    .team-field-labels span:last-child { width: 100px; }
-
-    .form-actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-top: 25px;
-    }
-
-    .danger { color: #ffb8a8; }
-    .small { font-size: .875rem; color: var(--muted); }
-
-    .double-bid {
-      display: flex;
-      align-items: end;
-      justify-content: center;
-      gap: 18px;
-      flex-wrap: wrap;
-      margin: 5px auto 18px;
-    }
-
-    .double-bid label {
-      font-size: .95rem;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      color: var(--gold);
-    }
-
-    .double-bid input { width: 185px; }
-    .double-bid select { max-width: 270px; }
-
-    .bid-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin: 0 0 24px;
-    }
-
-    .bid-card {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 15px 12px;
-      text-align: left;
-      background: #081976;
-      border: 1px solid #8b88b1;
-      font-size: .9rem;
-    }
-
-    .bid-card strong { color: var(--gold); }
-    .bid-card span { font-size: .875rem; }
-    .bid-card input { width: 100%; }
-    input[readonly] { opacity: .6; }
-    [hidden] { display: none !important; }
-
-    .pending-wager {
-      display: flex;
-      justify-content: center;
-      margin: 0 0 14px;
-    }
-
-    @media (min-width: 1400px) {
-      .category {
-        grid-template-rows:
-          75px repeat(5, minmax(53px, calc((100dvh - 470px) / 5)));
-      }
-    }
-
-    @media (max-width: 900px) {
-      .game { padding: 18px; }
-      .brand h1 { font-size: 2.5rem; }
-      .board { gap: 5px; padding: 5px; }
-
-      .category {
-        gap: 5px;
-        grid-template-rows: 65px repeat(5, 65px);
-      }
-
-      .category h2 { font-size: 1rem; }
-      .tile { font-size: 2.05rem; }
-      .scores { gap: 10px; }
-      .score-value { font-size: 1.55rem; }
-      .clue-body { padding: 20px 27px; }
-      .award-team { min-width: 41%; }
-
-      .bid-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 550px) {
-      .game { padding: 14px 8px; }
-      .brand h1 { font-size: 2rem; }
-      .brand small { font-size: .7rem; }
-      header { gap: 5px; padding-bottom: 14px; }
-      .quiet { padding: 8px; font-size: .875rem; }
-      .icon-button { font-size: 1.55rem; padding: 3px; }
-      .round-heading { font-size: .75rem; }
-      .board { gap: 3px; padding: 3px; }
-
-      .category {
-        gap: 3px;
-        grid-template-rows: 71px repeat(5, 58px);
-      }
-
-      .category h2 {
-        font-size: .8rem;
-        padding: 5px 2px;
-        line-height: 1.15;
-        overflow-wrap: anywhere;
-      }
-
-      .tile {
-        font-size: clamp(1.08rem, 4.7vw, 1.6rem);
-        text-shadow: 1px 2px #000;
-        padding: 2px;
-      }
-
-      .scores {
-        gap: 6px;
-        margin-top: 18px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .score-card { padding: 8px; }
-      .score-name { font-size: .85rem; }
-      .score-value { font-size: 1.45rem; }
-      footer { gap: 7px; }
-      .primary { padding: 10px 12px; font-size: .9rem; }
-      .clue-top, .clue-controls { padding: 12px 15px; }
-      .clue-top .eyebrow { font-size: .75rem; max-width: 70%; }
-      .clue-body { padding: 14px; }
-      .clue-text { font-size: 1.4rem; }
-      .award-row { padding: 0 14px 17px; gap: 8px; }
-      .award-team { padding: 9px; }
-      .team-score-heading { font-size: .85rem; }
-      .money-controls button { font-size: .9rem; }
-      .clue-controls { flex-wrap: wrap; }
-      .reveal-actions { gap: 8px; flex-wrap: wrap; }
-      .reveal-actions button { font-size: .9rem; padding: 10px; }
-      .double-bid { gap: 14px; }
-      .double-bid label { width: 100%; }
-
-      .double-bid input,
-      .double-bid select {
-        width: 100%;
-        max-width: none;
-      }
-
-      .bid-card { padding: 11px; }
-      .countdown { margin: 18px 14px 0; height: 8px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { scroll-behavior: auto !important; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starpath Jeopardy</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #050515;
+  --blue: #061cb0;
+  --gold: #f6c85b;
+  --white: #fffaf0;
+  --muted: #c1c4e4;
+  --black: #02020c;
+  --clue-font: "ITC Korinna", "ITC Korinna Std", "Korinna Std",
+    "Korinna BT", Georgia, "Times New Roman", serif;
+  --board-font: "Swiss 921 BT", "Swiss 911 BT", "Swiss 921",
+    "Swiss 911", Impact, "Arial Narrow", sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--white); background: var(--bg); }
+button, input, select { font: inherit; }
+
+button {
+  cursor: pointer;
+  background: #0c177d;
+  border: 1px solid #7473b4;
+  color: var(--white);
+  padding: 11px 18px;
+  font-weight: 700;
+  border-radius: 2px;
+}
+
+button:hover:not(:disabled) { background: #253ece; }
+button:disabled { opacity: .4; cursor: default; }
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+
+input, select {
+  background: #050e58;
+  color: var(--white);
+  border: 1px solid #a5a0ce;
+  padding: 10px;
+  min-width: 0;
+  border-radius: 0;
+}
+
+a { color: var(--gold); }
+
+.game {
+  max-width: 1680px;
+  margin: auto;
+  padding: 22px 34px 20px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 6px 16px;
+  border-bottom: 3px double #c8b584;
+}
+
+.brand h1 {
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-size: 3.05rem;
+  line-height: 1;
+  letter-spacing: .025em;
+  font-weight: 900;
+  margin: 0;
+  text-shadow: 3px 3px 0 #373d98, 5px 5px 0 #000;
+}
+
+.brand small {
+  display: block;
+  font-family: Arial, sans-serif;
+  font-size: .75rem;
+  letter-spacing: .38em;
+  color: var(--gold);
+  margin-bottom: 6px;
+  text-shadow: none;
+}
+
+nav { display: flex; gap: 5px; align-items: center; }
+
+.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.icon-button {
+  background: transparent;
+  border-color: transparent;
+  font-size: 1.8rem;
+  padding: 0 9px;
+}
+
+.primary {
+  background: var(--gold);
+  color: #0b114c;
+  border-color: #ffe2a2;
+  box-shadow: 2px 2px 0 #826423;
+}
+
+.primary:hover:not(:disabled) { background: #ffdf8d; }
+
+.round-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 4px 12px;
+  font-size: .8rem;
+  letter-spacing: .13em;
+  color: var(--muted);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  background: var(--black);
+  padding: 7px;
+  border: 3px double #a49a73;
+  box-shadow: 0 0 0 4px #101025, 0 7px 0 #010109;
+}
+
+.category {
+  display: grid;
+  grid-template-rows:
+    69px repeat(5, minmax(53px, calc((100dvh - 460px) / 5)));
+  gap: 6px;
+}
+
+.category h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+  padding: 9px;
+  margin: 0;
+  background: var(--blue);
+  color: var(--white);
+  font-family: var(--board-font);
+  font-stretch: condensed;
+  font-size: clamp(1rem, 1.6vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #020332;
+  border-bottom: 2px solid #03072e;
+}
+
+.tile {
+  background: linear-gradient(180deg, #091fb0, #071897);
+  color: var(--gold);
+  border: 0;
+  box-shadow: inset 0 0 0 1px #243abe;
+  font-family: var(--board-font);
+  font-size: clamp(1.8rem, 3.1vw, 3.2rem);
+  line-height: 1;
+  font-weight: 400;
+  text-shadow: 3px 3px 0 #000;
+  padding: 8px;
+  border-radius: 0;
+}
+
+.tile:hover:not(:disabled) { background: #1a33d0; }
+
+.tile.used:disabled {
+  opacity: 1;
+  background: #061584;
+  box-shadow: inset 0 0 0 1px #11259d;
+}
+
+.scores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.score-card {
+  text-align: center;
+  min-width: 0;
+  border: 3px double #aea082;
+  background: #07145f;
+  box-shadow: 3px 4px 0 #000;
+  padding: 9px 14px;
+}
+
+.score-name {
+  display: block;
+  color: var(--gold);
+  font-size: .88rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  overflow-wrap: anywhere;
+}
+
+.score-value {
+  display: block;
+  font-family: var(--board-font);
+  font-weight: 400;
+  font-size: 1.85rem;
+  line-height: 1.2;
+  margin-top: 5px;
+  text-shadow: 2px 2px #000;
+  font-variant-numeric: tabular-nums;
+}
+
+.negative { color: #ffaca0; }
+
+footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 17px;
+}
+
+footer > div { display: flex; gap: 8px; }
+
+.notice {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  background: var(--gold);
+  color: #07104c;
+  border: 2px solid #fff1bc;
+  z-index: 20;
+  max-width: 90vw;
+  box-shadow: 4px 4px #0008;
+  font-weight: 600;
+}
+
+.notice:empty { display: none; }
+
+dialog {
+  background: var(--blue);
+  color: var(--white);
+  border: 4px double #c4b48c;
+  box-shadow: 0 0 0 7px #03031b, 8px 12px 40px #000b;
+  border-radius: 0;
+  padding: 0;
+  max-height: 94dvh;
+  overflow: auto;
+}
+
+dialog::backdrop { background: #020214e8; }
+.clue-dialog { width: min(1160px, 94vw); }
+
+.clue-top, .clue-controls, .panel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #7a7aba;
+}
+
+.eyebrow {
+  font-size: .875rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--gold);
+  line-height: 1.35;
+}
+
+.clue-top .quiet { color: #ebe7fa; }
+
+.clue-body {
+  padding: 24px 44px 23px;
+  text-align: center;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.clue-text {
+  font-family: var(--clue-font);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.32;
+  text-transform: uppercase;
+  text-shadow: 2px 3px #020340;
+  margin: 14px 0 22px;
+  text-wrap: balance;
+}
+
+.clue-text.special-title {
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  letter-spacing: .025em;
+  color: var(--gold);
+  text-shadow: 3px 4px #000;
+  line-height: 1.1;
+}
+
+.answer-text {
+  font-family: var(--clue-font);
+  font-size: clamp(1.3rem, 2.4vw, 2rem);
+  color: var(--gold);
+  margin: 14px 0;
+  line-height: 1.35;
+}
+
+#answerPanel { border-top: 1px solid #686bbc; padding-top: 8px; }
+details { font-size: .875rem; line-height: 1.55; color: var(--muted); }
+summary { cursor: pointer; display: list-item; list-style-position: inside; }
+
+.award-row {
+  display: flex;
+  gap: 11px;
+  flex-wrap: wrap;
+  padding: 0 24px 22px;
+}
+
+.award-team {
+  flex: 1;
+  min-width: 155px;
+  border: 2px double #9590b9;
+  background: #061775;
+  padding: 12px;
+}
+
+.team-score-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: .9rem;
+}
+
+.team-score-heading strong {
+  color: var(--gold);
+  overflow-wrap: anywhere;
+}
+
+.team-score-heading span {
+  font-family: var(--board-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.money-controls { display: flex; gap: 7px; }
+
+.money-controls button {
+  font-family: var(--board-font);
+  font-weight: 400;
+  flex: 1;
+  font-size: 1.05rem;
+  padding: 10px 5px;
+  background: #030e5a;
+  border-color: #696cb0;
+}
+
+.positive { color: #b9f7c5; }
+.negative-button { color: #ffc6b8; }
+
+.clue-controls {
+  border-bottom: 0;
+  border-top: 1px solid #7a7aba;
+  padding: 15px 24px;
+}
+
+.reveal-actions { display: flex; gap: 12px; align-items: center; }
+
+.countdown {
+  height: 10px;
+  margin: 24px 44px 0;
+  background: #ffffff26;
+  overflow: hidden;
+}
+
+.countdown-fill {
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  transform-origin: left center;
+}
+
+.panel-dialog { width: min(700px, 94vw); background: #081665; }
+.panel-top h2 { font-size: 1.4rem; margin: 0; }
+.panel-top .quiet { font-size: 1.3rem; }
+#panelContent { padding: 22px 26px 28px; line-height: 1.55; }
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.field input[type="text"] { width: calc(100% - 115px); }
+.field input[type="number"] { width: 100px; }
+
+.team-field-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .9rem;
+  margin-bottom: 8px;
+}
+
+.team-field-labels span:last-child { width: 100px; }
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 25px;
+}
+
+.danger { color: #ffb8a8; }
+.small { font-size: .875rem; color: var(--muted); }
+
+.double-bid {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 5px auto 18px;
+}
+
+.double-bid label {
+  font-size: .95rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: var(--gold);
+}
+
+.double-bid input { width: 185px; }
+.double-bid select { max-width: 270px; }
+
+.bid-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+}
+
+.bid-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px 12px;
+  text-align: left;
+  background: #081976;
+  border: 1px solid #8b88b1;
+  font-size: .9rem;
+}
+
+.bid-card strong { color: var(--gold); }
+.bid-card span { font-size: .875rem; }
+.bid-card input { width: 100%; }
+input[readonly] { opacity: .6; }
+[hidden] { display: none !important; }
+
+.pending-wager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 0 14px;
+}
+
+@media (min-width: 1400px) {
+  .category {
+    grid-template-rows:
+      75px repeat(5, minmax(53px, calc((100dvh - 470px) / 5)));
+  }
+}
+
+@media (max-width: 900px) {
+  .game { padding: 18px; }
+  .brand h1 { font-size: 2.5rem; }
+  .board { gap: 5px; padding: 5px; }
+  .category { gap: 5px; grid-template-rows: 65px repeat(5, 65px); }
+  .category h2 { font-size: 1rem; }
+  .tile { font-size: 2.05rem; }
+  .scores { gap: 10px; }
+  .score-value { font-size: 1.55rem; }
+  .clue-body { padding: 20px 27px; }
+  .award-team { min-width: 41%; }
+  .bid-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 550px) {
+  .game { padding: 14px 8px; }
+  .brand h1 { font-size: 2rem; }
+  .brand small { font-size: .7rem; }
+  header { gap: 5px; padding-bottom: 14px; }
+  .quiet { padding: 8px; font-size: .875rem; }
+  .icon-button { font-size: 1.55rem; padding: 3px; }
+  .round-heading { font-size: .75rem; }
+  .board { gap: 3px; padding: 3px; }
+  .category { gap: 3px; grid-template-rows: 71px repeat(5, 58px); }
+
+  .category h2 {
+    font-size: .8rem;
+    padding: 5px 2px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .tile {
+    font-size: clamp(1.08rem, 4.7vw, 1.6rem);
+    text-shadow: 1px 2px #000;
+    padding: 2px;
+  }
+
+  .scores {
+    gap: 6px;
+    margin-top: 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .score-card { padding: 8px; }
+  .score-name { font-size: .85rem; }
+  .score-value { font-size: 1.45rem; }
+  footer { gap: 7px; }
+  .primary { padding: 10px 12px; font-size: .9rem; }
+  .clue-top, .clue-controls { padding: 12px 15px; }
+  .clue-top .eyebrow { font-size: .75rem; max-width: 70%; }
+  .clue-body { padding: 14px; }
+  .clue-text { font-size: 1.4rem; }
+  .award-row { padding: 0 14px 17px; gap: 8px; }
+  .award-team { padding: 9px; }
+  .team-score-heading { font-size: .85rem; }
+  .money-controls button { font-size: .9rem; }
+  .clue-controls { flex-wrap: wrap; }
+  .reveal-actions { gap: 8px; flex-wrap: wrap; }
+  .reveal-actions button { font-size: .9rem; padding: 10px; }
+  .double-bid { gap: 14px; }
+  .double-bid label { width: 100%; }
+
+  .double-bid input,
+  .double-bid select {
+    width: 100%;
+    max-width: none;
+  }
+
+  .bid-card { padding: 11px; }
+  .countdown { margin: 18px 14px 0; height: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+</style>
 </head>
 
 <body>
-  <div class="game">
-    <header>
-      <div class="brand">
-        <h1><small>STARPATH</small>JEOPARDY!</h1>
-      </div>
+<div class="game">
+  <header>
+    <div class="brand">
+      <h1><small>STARPATH</small>JEOPARDY!</h1>
+    </div>
+    <nav aria-label="Game controls">
+      <button id="setupBtn" class="quiet">Teams</button>
+      <button
+        id="fullscreenBtn"
+        class="icon-button"
+        aria-label="Toggle full screen"
+        title="Full screen"
+      >⛶</button>
+    </nav>
+  </header>
 
-      <nav aria-label="Game controls">
-        <button id="setupBtn" class="quiet">Teams</button>
-        <button
-          id="fullscreenBtn"
-          class="icon-button"
-          aria-label="Toggle full screen"
-          title="Full screen"
-        >⛶</button>
-      </nav>
-    </header>
+  <main id="main"></main>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+</div>
 
-    <main id="main"></main>
-    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+<dialog id="clueDialog" class="clue-dialog" aria-labelledby="clueLabel">
+  <div class="clue-top">
+    <span id="clueLabel" class="eyebrow"></span>
+    <button id="closeClue" class="quiet">
+      Board <span aria-hidden="true">×</span>
+    </button>
   </div>
 
-  <dialog
-    id="clueDialog"
-    class="clue-dialog"
-    aria-labelledby="clueLabel"
+  <div
+    id="countdown"
+    class="countdown"
+    role="progressbar"
+    aria-label="Answer time remaining"
+    aria-valuemin="0"
+    aria-valuemax="8"
+    aria-valuenow="8"
+    hidden
   >
-    <div class="clue-top">
-      <span id="clueLabel" class="eyebrow"></span>
-      <button id="closeClue" class="quiet">
-        Board <span aria-hidden="true">×</span>
-      </button>
+    <div id="countdownFill" class="countdown-fill"></div>
+  </div>
+
+  <div class="clue-body">
+    <p id="clueText" class="clue-text"></p>
+    <div id="wagerPanel" hidden></div>
+
+    <div id="answerPanel" hidden>
+      <p id="answerText" class="answer-text"></p>
+      <details id="sourceDetails">
+        <summary>Notes</summary>
+        <div id="sourceText"></div>
+      </details>
     </div>
+  </div>
 
-    <div
-      id="countdown"
-      class="countdown"
-      role="progressbar"
-      aria-label="Answer time remaining"
-      aria-valuemin="0"
-      aria-valuemax="8"
-      aria-valuenow="8"
-      hidden
-    >
-      <div id="countdownFill" class="countdown-fill"></div>
+  <div id="awardRow" class="award-row"></div>
+
+  <div class="clue-controls">
+    <button id="clueUndoBtn" class="quiet">↶ Undo</button>
+    <div class="reveal-actions">
+      <button id="skipBtn" class="quiet" hidden>Skip</button>
+      <button id="answeredBtn" hidden>Answered</button>
+      <button id="revealBtn">Show answer</button>
+      <button id="doneBtn" class="primary">Done</button>
     </div>
+  </div>
+</dialog>
 
-    <div class="clue-body">
-      <p id="clueText" class="clue-text"></p>
-      <div id="wagerPanel" hidden></div>
+<dialog id="panelDialog" class="panel-dialog" aria-labelledby="panelTitle">
+  <div class="panel-top">
+    <h2 id="panelTitle"></h2>
+    <button id="closePanel" class="quiet" aria-label="Close panel">×</button>
+  </div>
+  <div id="panelContent"></div>
+</dialog>
 
-      <div id="answerPanel" hidden>
-        <p id="answerText" class="answer-text"></p>
-        <details id="sourceDetails">
-          <summary>Notes</summary>
-          <div id="sourceText"></div>
-        </details>
-      </div>
-    </div>
+<script>
+"use strict";
 
-    <div id="awardRow" class="award-row"></div>
+const $ = selector => document.querySelector(selector);
 
-    <div class="clue-controls">
-      <button id="clueUndoBtn" class="quiet">↶ Undo</button>
+// Sources used by the questions and host notes.
+const sources = {
+  official: {
+    label: "Starpath · Starmine",
+    url: "https://www.starpath.space/starmine",
+    evidence: "https://www.starpath.space/starmine",
+    type: "Starpath website"
+  },
+  solar: {
+    label: "Starpath · Starlight",
+    url: "https://www.starpath.space/starlight",
+    evidence: "https://www.starpath.space/starlight",
+    type: "Starpath website"
+  },
+  testing: {
+    label: "Starpath · News",
+    url: "https://www.starpath.space/news",
+    evidence: "https://www.starpath.space/news",
+    type: "Starpath website"
+  },
+  cold: {
+    label: "NASA · Lunar thermal control",
+    url: "https://ntrs.nasa.gov/citations/20120014158",
+    evidence: "https://ntrs.nasa.gov/citations/20120014158",
+    type: "NASA science background"
+  },
+  lunar: {
+    label: "Lunar Ice Mining For Multiplanetary Travel | Starpath",
+    url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
+    evidence: "https://www.sourcery.vc/p/aramco-of-the-moon-starpath",
+    type: "Published episode notes"
+  },
+  mars: {
+    label: "Relentless · Building a self-sustaining city on Mars",
+    url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
+    evidence: "https://www.linkedin.com/posts/ti-morse_sat-down-with-saurav-shroff-co-founder-activity-7386502260991782913-5Y9Y",
+    type: "Host’s episode description and published excerpt"
+  },
+  chapters: {
+    label: "Relentless · Testing and iteration chapters",
+    url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
+    evidence: "https://www.linkedin.com/posts/stephaniesoquet_how-to-build-a-self-sustaining-city-on-mars-activity-7388648758810615809-_FJd",
+    type: "Published chapter list; application clue"
+  },
+  nasa: {
+    label: "NASA · Producing propellant from lunar water",
+    url: "https://ntrs.nasa.gov/citations/20230010039",
+    evidence: "https://ntrs.nasa.gov/citations/20230010039",
+    type: "Science background for the lunar-ice discussion"
+  },
+  glossary: {
+    label: "NASA · Lunar soil and water",
+    url: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
+    evidence: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
+    type: "Science background"
+  },
+  vision: {
+    label: "Sourcery · Founder’s long-term vision",
+    url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
+    evidence: "https://www.linkedin.com/posts/mollysoshea_new-pod-aramco-of-the-moon-starpath-activity-7258126559562084352-AEBi",
+    type: "Publisher’s interview excerpt"
+  }
+};
 
-      <div class="reveal-actions">
-        <button id="skipBtn" class="quiet" hidden>Skip</button>
-        <button id="answeredBtn" hidden>Answered</button>
-        <button id="revealBtn">Show answer</button>
-        <button id="doneBtn" class="primary">Done</button>
-      </div>
-    </div>
-  </dialog>
+// Each clue: [question, answer, host note, source key].
+// Rows are worth $200, $400, $600, $800, and $1000.
+const categories = [
+  {
+    name: "The Big Mission",
+    clues: [
+      [
+        "This red planet is the destination for Starpath’s long-term city-building vision.",
+        "What is Mars?",
+        "",
+        "mars"
+      ],
+      [
+        "This CEO and cofounder once worked, briefly, at SpaceX.",
+        "Who is Saurav Shroff?",
+        "Accept Saurav or Shroff.",
+        "mars"
+      ],
+      [
+        "This word means living on more than one planet.",
+        "What is multiplanetary?",
+        "Accept “multi-planet” or an equivalent explanation.",
+        "mars"
+      ],
+      [
+        "A city that can keep going without essential supplies from Earth is described this way.",
+        "What is self-sustaining?",
+        "Accept self-sufficient or able to support itself.",
+        "mars"
+      ],
+      [
+        "A second home for humanity could help protect civilization if this happens on Earth.",
+        "What is a major catastrophe?",
+        "Accept a disaster that threatens humanity. This is a motivation, not a guarantee of safety.",
+        "vision"
+      ]
+    ]
+  },
+  {
+    name: "Ice to Liftoff",
+    clues: [
+      [
+        "This frozen resource is the starting material in the lunar-mining discussion.",
+        "What is water ice?",
+        "Ice or frozen water is enough.",
+        "lunar"
+      ],
+      [
+        "LOX is short for this rocket-propellant ingredient.",
+        "What is liquid oxygen?",
+        "",
+        "lunar"
+      ],
+      [
+        "Starpath targets icy regolith near this lunar pole.",
+        "What is the South Pole?",
+        "",
+        "official"
+      ],
+      [
+        "Water is H₂O. Splitting it releases these two elements.",
+        "What are hydrogen and oxygen?",
+        "Both are needed. No chemical equation required.",
+        "nasa"
+      ],
+      [
+        "This word describes the loose dust and broken rock covering the Moon.",
+        "What is regolith?",
+        "Accept lunar soil or Moon dust.",
+        "glossary"
+      ]
+    ]
+  },
+  {
+    name: "Meet the Machines",
+    clues: [
+      [
+        "This robotic vehicle moves around the surface and gathers material.",
+        "What is a rover?",
+        "Accept mining robot.",
+        "lunar"
+      ],
+      [
+        "Starpath’s space-ready solar panel line goes by this bright name.",
+        "What is Starlight?",
+        "",
+        "solar"
+      ],
+      [
+        "This processing facility turns mined material into useful products.",
+        "What is a refinery?",
+        "Accept processing plant.",
+        "lunar"
+      ],
+      [
+        "In the later interview, Starpath sells solar panels to companies that build these orbiting machines.",
+        "What are satellites?",
+        "",
+        "mars"
+      ],
+      [
+        "A rover digs and a refinery processes. The third core system supplies this.",
+        "What is electrical power?",
+        "Accept electricity or energy.",
+        "lunar"
+      ]
+    ]
+  },
+  {
+    name: "Build, Test, Repeat",
+    clues: [
+      [
+        "Starpath tested its rover in a thermal-vacuum chamber run by this U.S. space agency.",
+        "What is NASA?",
+        "",
+        "testing"
+      ],
+      [
+        "An early model built to try out a design is called this.",
+        "What is a prototype?",
+        "Accept test model. Application of the prototyping topic.",
+        "lunar"
+      ],
+      [
+        "Starpath is developing this lunar rover to search permanently shadowed craters for water ice.",
+        "What is Shadow Voyager?",
+        "",
+        "testing"
+      ],
+      [
+        "Build, test, improve, repeat: this cycle helps engineers make a design better.",
+        "What is iteration?",
+        "Accept improving through repeated tests.",
+        "chapters"
+      ],
+      [
+        "This laser-based sensing technology helps Shadow Voyager map terrain and avoid hazards.",
+        "What is LiDAR?",
+        "Accept laser scanning or light detection and ranging.",
+        "testing"
+      ]
+    ]
+  },
+  {
+    name: "Make the Connection",
+    clues: [
+      [
+        "This company builds Starship, a rocket discussed in the interviews.",
+        "What is SpaceX?",
+        "",
+        "lunar"
+      ],
+      [
+        "Like a car on a long trip, a rocket may need to do this before returning home.",
+        "What is refuel?",
+        "",
+        "mars"
+      ],
+      [
+        "A place where vehicles stop to refuel is a useful Earth analogy for Starpath’s mission.",
+        "What is a gas station?",
+        "Accept fuel station or service station. This is a classroom analogy.",
+        "mars"
+      ],
+      [
+        "Lunar night requires this to keep batteries functioning.",
+        "What is heat?",
+        "Accept heating, heaters, or keeping the batteries warm.",
+        "cold"
+      ],
+      [
+        "Starpath uses this name for fuel-production rate relative to the mass of the equipment producing it.",
+        "What is the Starpath Ratio?",
+        "Clue and definition supplied by the host; also named in the Sourcery episode’s chapter list.",
+        "lunar"
+      ]
+    ]
+  }
+];
 
-  <dialog
-    id="panelDialog"
-    class="panel-dialog"
-    aria-labelledby="panelTitle"
-  >
-    <div class="panel-top">
-      <h2 id="panelTitle"></h2>
-      <button id="closePanel" class="quiet" aria-label="Close panel">×</button>
-    </div>
-    <div id="panelContent"></div>
-  </dialog>
+const clues = categories.flatMap((category, categoryIndex) =>
+  category.clues.map((clue, rowIndex) => ({
+    id: `${categoryIndex}-${rowIndex}`,
+    category: category.name,
+    value: (rowIndex + 1) * 200,
+    text: clue[0],
+    answer: clue[1],
+    note: clue[2],
+    source: clue[3]
+  }))
+);
 
-  <script>
-    "use strict";
+const finalClue = {
+  category: "Live off the land",
+  text: "How can ice on the Moon or Mars become useful to a rocket? Name the two main steps.",
+  answer: "Mine the ice, then process it into propellant ingredients.",
+  note: "Give credit for both ideas: ① mine or collect local water/ice; ② turn it into useful propellant, such as oxygen. “Mine ice and make rocket fuel” is fine. Exact terminology is not required.",
+  source: "lunar"
+};
 
-    const $ = selector => document.querySelector(selector);
+// Game configuration.
+const key = "starpath-classroom-jeopardy-v3";
+const defaultNames = ["TEAM SSS", "TEAM XSS", "TEAM MNR", "TEAM JKL"];
+const doubles = ["1-2", "2-2"];
+const doubleDuration = 8000;
 
-    // SOURCES
+// Everyone may wager at least $1000, including zero/negative balances.
+const doubleLimit = score => Math.max(1000, score);
 
-    const sources = {
-      official: {
-        label: "Starpath · Starmine",
-        url: "https://www.starpath.space/starmine",
-        evidence: "https://www.starpath.space/starmine",
-        type: "Starpath website"
-      },
-      solar: {
-        label: "Starpath · Starlight",
-        url: "https://www.starpath.space/starlight",
-        evidence: "https://www.starpath.space/starlight",
-        type: "Starpath website"
-      },
-      testing: {
-        label: "Starpath · News",
-        url: "https://www.starpath.space/news",
-        evidence: "https://www.starpath.space/news",
-        type: "Starpath website"
-      },
-      cold: {
-        label: "NASA · Lunar thermal control",
-        url: "https://ntrs.nasa.gov/citations/20120014158",
-        evidence: "https://ntrs.nasa.gov/citations/20120014158",
-        type: "NASA science background"
-      },
-      lunar: {
-        label: "Lunar Ice Mining For Multiplanetary Travel | Starpath",
-        url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
-        evidence: "https://www.sourcery.vc/p/aramco-of-the-moon-starpath",
-        type: "Published episode notes"
-      },
-      mars: {
-        label: "Relentless · Building a self-sustaining city on Mars",
-        url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
-        evidence: "https://www.linkedin.com/posts/ti-morse_sat-down-with-saurav-shroff-co-founder-activity-7386502260991782913-5Y9Y",
-        type: "Host’s episode description and published excerpt"
-      },
-      chapters: {
-        label: "Relentless · Testing and iteration chapters",
-        url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
-        evidence: "https://www.linkedin.com/posts/stephaniesoquet_how-to-build-a-self-sustaining-city-on-mars-activity-7388648758810615809-_FJd",
-        type: "Published chapter list; application clue"
-      },
-      nasa: {
-        label: "NASA · Producing propellant from lunar water",
-        url: "https://ntrs.nasa.gov/citations/20230010039",
-        evidence: "https://ntrs.nasa.gov/citations/20230010039",
-        type: "Science background for the lunar-ice discussion"
-      },
-      glossary: {
-        label: "NASA · Lunar soil and water",
-        url: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
-        evidence: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
-        type: "Science background"
-      },
-      vision: {
-        label: "Sourcery · Founder’s long-term vision",
-        url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
-        evidence: "https://www.linkedin.com/posts/mollysoshea_new-pod-aramco-of-the-moon-starpath-activity-7258126559562084352-AEBi",
-        type: "Publisher’s interview excerpt"
-      }
+const fresh = () => ({
+  edition: 4,
+  teams: defaultNames.map(name => ({ name, score: 0 })),
+  played: [],
+  finalDone: false,
+  sessions: {},
+  activeId: null,
+  history: []
+});
+
+let state = fresh();
+let timerId = null;
+let storageOk = true;
+let noticeId;
+
+const esc = value => String(value).replace(/[&<>"']/g, character => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[character]));
+
+const money = amount =>
+  `${amount < 0 ? "−" : ""}$${Math.abs(amount).toLocaleString(
+    "en-US",
+    { useGrouping: false }
+  )}`;
+
+const active = () =>
+  state.activeId ? state.sessions[state.activeId] : null;
+
+const question = () =>
+  state.activeId === "final"
+    ? finalClue
+    : clues.find(clue => clue.id === state.activeId);
+
+// Saved-game support.
+function validTeams(teams) {
+  return Array.isArray(teams) &&
+    teams.length >= 1 &&
+    teams.length <= 6 &&
+    teams.every(team =>
+      typeof team.name === "string" &&
+      Number.isFinite(team.score)
+    );
+}
+
+try {
+  const saved = JSON.parse(localStorage.getItem(key));
+
+  if (saved && validTeams(saved.teams) && Array.isArray(saved.played)) {
+    state = {
+      ...fresh(),
+      ...saved,
+      edition: saved.edition || 0
     };
 
-    // QUESTIONS
-    // Each row: [clue, answer, host note, source key].
-    // Rows are worth $200, $400, $600, $800, and $1000.
+    state.sessions = saved.sessions || {};
+    state.history = Array.isArray(saved.history)
+      ? saved.history.slice(-80)
+      : [];
 
-    const categories = [
-      {
-        name: "The Big Mission",
-        clues: [
-          [
-            "This red planet is the destination for Starpath’s long-term city-building vision.",
-            "What is Mars?",
-            "",
-            "mars"
-          ],
-          [
-            "This CEO and cofounder once worked, briefly, at SpaceX.",
-            "Who is Saurav Shroff?",
-            "Accept Saurav or Shroff.",
-            "mars"
-          ],
-          [
-            "This word means living on more than one planet.",
-            "What is multiplanetary?",
-            "Accept “multi-planet” or an equivalent explanation.",
-            "mars"
-          ],
-          [
-            "A city that can keep going without essential supplies from Earth is described this way.",
-            "What is self-sustaining?",
-            "Accept self-sufficient or able to support itself.",
-            "mars"
-          ],
-          [
-            "A second home for humanity could help protect civilization if this happens on Earth.",
-            "What is a major catastrophe?",
-            "Accept a disaster that threatens humanity. This is a motivation, not a guarantee of safety.",
-            "vision"
-          ]
-        ]
-      },
-      {
-        name: "Ice to Liftoff",
-        clues: [
-          [
-            "This frozen resource is the starting material in the lunar-mining discussion.",
-            "What is water ice?",
-            "Ice or frozen water is enough.",
-            "lunar"
-          ],
-          [
-            "LOX is short for this rocket-propellant ingredient.",
-            "What is liquid oxygen?",
-            "",
-            "lunar"
-          ],
-          [
-            "Starpath targets icy regolith near this lunar pole.",
-            "What is the South Pole?",
-            "",
-            "official"
-          ],
-          [
-            "Water is H₂O. Splitting it releases these two elements.",
-            "What are hydrogen and oxygen?",
-            "Both are needed. No chemical equation required.",
-            "nasa"
-          ],
-          [
-            "This word describes the loose dust and broken rock covering the Moon.",
-            "What is regolith?",
-            "Accept lunar soil or Moon dust.",
-            "glossary"
-          ]
-        ]
-      },
-      {
-        name: "Meet the Machines",
-        clues: [
-          [
-            "This robotic vehicle moves around the surface and gathers material.",
-            "What is a rover?",
-            "Accept mining robot.",
-            "lunar"
-          ],
-          [
-            "Starpath’s space-ready solar panel line goes by this bright name.",
-            "What is Starlight?",
-            "",
-            "solar"
-          ],
-          [
-            "This processing facility turns mined material into useful products.",
-            "What is a refinery?",
-            "Accept processing plant.",
-            "lunar"
-          ],
-          [
-            "In the later interview, Starpath sells solar panels to companies that build these orbiting machines.",
-            "What are satellites?",
-            "",
-            "mars"
-          ],
-          [
-            "A rover digs and a refinery processes. The third core system supplies this.",
-            "What is electrical power?",
-            "Accept electricity or energy.",
-            "lunar"
-          ]
-        ]
-      },
-      {
-        name: "Build, Test, Repeat",
-        clues: [
-          [
-            "Starpath tested its rover in a thermal-vacuum chamber run by this U.S. space agency.",
-            "What is NASA?",
-            "",
-            "testing"
-          ],
-          [
-            "An early model built to try out a design is called this.",
-            "What is a prototype?",
-            "Accept test model. Application of the prototyping topic.",
-            "lunar"
-          ],
-          [
-            "Starpath is developing this lunar rover to search permanently shadowed craters for water ice.",
-            "What is Shadow Voyager?",
-            "",
-            "testing"
-          ],
-          [
-            "Build, test, improve, repeat: this cycle helps engineers make a design better.",
-            "What is iteration?",
-            "Accept improving through repeated tests.",
-            "chapters"
-          ],
-          [
-            "This laser-based sensing technology helps Shadow Voyager map terrain and avoid hazards.",
-            "What is LiDAR?",
-            "Accept laser scanning or light detection and ranging.",
-            "testing"
-          ]
-        ]
-      },
-      {
-        name: "Make the Connection",
-        clues: [
-          [
-            "This company builds Starship, a rocket discussed in the interviews.",
-            "What is SpaceX?",
-            "",
-            "lunar"
-          ],
-          [
-            "Like a car on a long trip, a rocket may need to do this before returning home.",
-            "What is refuel?",
-            "",
-            "mars"
-          ],
-          [
-            "A place where vehicles stop to refuel is a useful Earth analogy for Starpath’s mission.",
-            "What is a gas station?",
-            "Accept fuel station or service station. This is a classroom analogy.",
-            "mars"
-          ],
-          [
-            "Lunar night requires this to keep batteries functioning.",
-            "What is heat?",
-            "Accept heating, heaters, or keeping the batteries warm.",
-            "cold"
-          ],
-          [
-            "Starpath uses this name for fuel-production rate relative to the mass of the equipment producing it.",
-            "What is the Starpath Ratio?",
-            "Clue and definition supplied by the host; also named in the Sourcery episode’s chapter list.",
-            "lunar"
-          ]
-        ]
-      }
-    ];
-
-    const clues = categories.flatMap((category, categoryIndex) =>
-      category.clues.map((clue, rowIndex) => ({
-        id: `${categoryIndex}-${rowIndex}`,
-        category: category.name,
-        value: (rowIndex + 1) * 200,
-        text: clue[0],
-        answer: clue[1],
-        note: clue[2],
-        source: clue[3]
-      }))
+    if (!state.sessions[state.activeId]) {
+      state.activeId = null;
+    }
+  } else {
+    const prior = JSON.parse(
+      localStorage.getItem("starpath-classroom-jeopardy-v2")
     );
 
-    const finalClue = {
-      category: "Live off the land",
-      text: "How can ice on the Moon or Mars become useful to a rocket? Name the two main steps.",
-      answer: "Mine the ice, then process it into propellant ingredients.",
-      note: "Give credit for both ideas: ① mine or collect local water/ice; ② turn it into useful propellant, such as oxygen. “Mine ice and make rocket fuel” is fine. Exact terminology is not required.",
-      source: "lunar"
-    };
+    if (prior && validTeams(prior.teams)) {
+      state.edition = 0;
+      state.teams = defaultNames.map((name, index) => ({
+        name,
+        score: prior.teams[index]?.score || 0
+      }));
+      state.played = Array.isArray(prior.played) ? prior.played : [];
+      state.finalDone = !!prior.finalDone;
+    }
+  }
 
-    // SETTINGS
+  state.played = state.played.filter(id =>
+    clues.some(clue => clue.id === id)
+  );
+} catch {
+  // Continue with a fresh game if saved data cannot be read.
+}
 
-    const key = "starpath-classroom-jeopardy-v3";
+// Preserve compatibility with earlier versions.
+if (state.edition < 4) {
+  const migrate = snapshot => {
+    snapshot.teams = defaultNames.map((name, index) => ({
+      name,
+      score: snapshot.teams?.[index]?.score || 0
+    }));
 
-    const defaultNames = [
-      "TEAM SSS",
-      "TEAM XSS",
-      "TEAM MNR",
-      "TEAM JKL"
-    ];
+    snapshot.played = (snapshot.played || [])
+      .filter(id => id !== "2-4");
 
-    // Category and row indexes start at zero.
-    const doubles = ["1-2", "2-2"];
-    const doubleDuration = 8000;
-    const doubleLimit = score => score > 0 ? Math.max(1000, score) : 0;
-
-    const fresh = () => ({
-      edition: 4,
-      teams: defaultNames.map(name => ({ name, score: 0 })),
-      played: [],
-      finalDone: false,
-      sessions: {},
-      activeId: null,
-      history: []
-    });
-
-    let state = fresh();
-    let timerId = null;
-    let storageOk = true;
-    let noticeId;
-
-    const esc = value => String(value).replace(/[&<>"']/g, character => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[character]));
-
-    const money = amount =>
-      `${amount < 0 ? "−" : ""}$${Math.abs(amount).toLocaleString(
-        "en-US",
-        { useGrouping: false }
-      )}`;
-
-    const active = () =>
-      state.activeId ? state.sessions[state.activeId] : null;
-
-    const question = () =>
-      state.activeId === "final"
-        ? finalClue
-        : clues.find(clue => clue.id === state.activeId);
-
-    // SAVED GAMES
-
-    function validTeams(teams) {
-      return Array.isArray(teams) &&
-        teams.length >= 1 &&
-        teams.length <= 6 &&
-        teams.every(team =>
-          typeof team.name === "string" &&
-          Number.isFinite(team.score)
-        );
+    if (snapshot.sessions) {
+      delete snapshot.sessions["2-4"];
     }
 
-    try {
-      const saved = JSON.parse(localStorage.getItem(key));
-
-      if (saved && validTeams(saved.teams) && Array.isArray(saved.played)) {
-        state = {
-          ...fresh(),
-          ...saved,
-          edition: saved.edition || 0
-        };
-
-        state.sessions = saved.sessions || {};
-        state.history = Array.isArray(saved.history)
-          ? saved.history.slice(-80)
-          : [];
-
-        if (!state.sessions[state.activeId]) {
-          state.activeId = null;
-        }
-      } else {
-        const prior = JSON.parse(
-          localStorage.getItem("starpath-classroom-jeopardy-v2")
-        );
-
-        if (prior && validTeams(prior.teams)) {
-          state.edition = 0;
-          state.teams = defaultNames.map((name, index) => ({
-            name,
-            score: prior.teams[index]?.score || 0
-          }));
-          state.played = Array.isArray(prior.played) ? prior.played : [];
-          state.finalDone = !!prior.finalDone;
-        }
-      }
-
-      state.played = state.played.filter(id =>
-        clues.some(clue => clue.id === id)
-      );
-    } catch {
-      // Start fresh when stored data cannot be read.
+    if (snapshot.activeId === "2-4") {
+      snapshot.activeId = null;
     }
 
-    // Compatibility with older saved versions of the game.
-    if (state.edition < 4) {
-      const migrate = snapshot => {
-        snapshot.teams = defaultNames.map((name, index) => ({
-          name,
-          score: snapshot.teams?.[index]?.score || 0
-        }));
+    snapshot.edition = 4;
+  };
 
-        snapshot.played = (snapshot.played || [])
-          .filter(id => id !== "2-4");
+  migrate(state);
+  state.history.forEach(migrate);
+}
 
-        if (snapshot.sessions) {
-          delete snapshot.sessions["2-4"];
-        }
+function notify(text) {
+  $("#notice").textContent = text;
+  clearTimeout(noticeId);
+  noticeId = setTimeout(() => {
+    $("#notice").textContent = "";
+  }, 2500);
+}
 
-        if (snapshot.activeId === "2-4") {
-          snapshot.activeId = null;
-        }
-
-        snapshot.edition = 4;
-      };
-
-      migrate(state);
-      state.history.forEach(migrate);
+function save() {
+  try {
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    if (storageOk) {
+      storageOk = false;
+      notify("Keep this tab open. Browser saving is unavailable.");
     }
+  }
+}
 
-    function notify(text) {
-      $("#notice").textContent = text;
-      clearTimeout(noticeId);
-      noticeId = setTimeout(() => {
-        $("#notice").textContent = "";
-      }, 2500);
-    }
+function checkpoint() {
+  const { history, ...snapshot } = state;
+  state.history.push(JSON.parse(JSON.stringify(snapshot)));
 
-    function save() {
-      try {
-        localStorage.setItem(key, JSON.stringify(state));
-      } catch {
-        if (storageOk) {
-          storageOk = false;
-          notify("Keep this tab open. Browser saving is unavailable.");
-        }
-      }
-    }
+  if (state.history.length > 80) {
+    state.history.shift();
+  }
+}
 
-    function checkpoint() {
-      const { history, ...snapshot } = state;
-      state.history.push(JSON.parse(JSON.stringify(snapshot)));
+// Board rendering.
+function scoreHTML() {
+  return state.teams.map(team => `
+    <div class="score-card">
+      <span class="score-name">${esc(team.name)}</span>
+      <strong class="score-value ${team.score < 0 ? "negative" : ""}">
+        ${money(team.score)}
+      </strong>
+    </div>
+  `).join("");
+}
 
-      if (state.history.length > 80) {
-        state.history.shift();
-      }
-    }
+function renderBoard() {
+  const pending = pendingWagers();
 
-    // BOARD
+  $("#main").innerHTML = `
+    <div class="round-heading">
+      <span>ROUND 1</span>
+      <span>${state.played.length} / 25</span>
+    </div>
 
-    function scoreHTML() {
-      return state.teams.map(team => `
-        <div class="score-card">
-          <span class="score-name">${esc(team.name)}</span>
-          <strong class="score-value ${team.score < 0 ? "negative" : ""}">
-            ${money(team.score)}
-          </strong>
-        </div>
-      `).join("");
-    }
-
-    function renderBoard() {
-      const pending = pendingWager();
-
-      $("#main").innerHTML = `
-        <div class="round-heading">
-          <span>ROUND 1</span>
-          <span>${state.played.length} / 25</span>
-        </div>
-
-        ${pending ? `
-          <div class="pending-wager">
-            <button id="resumeWagerBtn" class="primary">
-              Resume ${pending.mode === "final"
-                ? "Final Jeopardy"
-                : "Daily Double"}
-            </button>
-          </div>
-        ` : ""}
-
-        <section id="board" class="board" aria-label="Jeopardy board">
-          ${categories.map((category, categoryIndex) => `
-            <div class="category">
-              <h2>${esc(category.name)}</h2>
-
-              ${clues
-                .filter(clue => clue.id.startsWith(categoryIndex + "-"))
-                .map(clue => {
-                  const used = state.played.includes(clue.id);
-
-                  return `
-                    <button
-                      class="tile ${used ? "used" : ""}"
-                      data-clue="${clue.id}"
-                      ${used ? "disabled" : ""}
-                      aria-label="${esc(category.name)} for ${clue.value}${used ? ", played" : ""}"
-                    >${used ? "" : money(clue.value)}</button>
-                  `;
-                }).join("")}
-            </div>
-          `).join("")}
-        </section>
-
-        <section aria-label="Team scores" id="scores" class="scores">
-          ${scoreHTML()}
-        </section>
-
-        <footer>
-          <div>
-            <button
-              id="undoBtn"
-              class="quiet"
-              ${state.history.length ? "" : "disabled"}
-            >↶ Undo</button>
-            <button id="sourcesBtn" class="quiet">Sources</button>
-          </div>
-
-          <button id="finalBtn" class="primary">
-            Final Jeopardy${state.finalDone ? " ✓" : ""}
-          </button>
-        </footer>
-      `;
-
-      document.querySelectorAll("[data-clue]").forEach(button => {
-        button.onclick = () => openClue(button.dataset.clue);
-      });
-
-      $("#undoBtn").onclick = undo;
-      $("#finalBtn").onclick = openFinal;
-      $("#sourcesBtn").onclick = showSources;
-
-      if (pending) {
-        $("#resumeWagerBtn").onclick = resumeWager;
-      }
-    }
-
-    // CLUE SESSIONS
-
-    function newSession(id) {
-      const mode = id === "final"
-        ? "final"
-        : doubles.includes(id) ? "double" : "normal";
-
-      return {
-        id,
-        mode,
-        stage: mode === "normal" ? "question" : "bid",
-        answerShown: false,
-        team: 0,
-        bids: state.teams.map(team => team.score <= 0 ? "0" : ""),
-        bases: state.teams.map(team => team.score),
-        applied: state.teams.map(() => false),
-        deadline: null,
-        responded: false,
-        expired: false,
-        duration: doubleDuration,
-        remaining: doubleDuration
-      };
-    }
-
-    function pendingWager() {
-      return Object.values(state.sessions).find(session =>
-        session.mode !== "normal" &&
-        session.stage === "question" &&
-        !(session.id === "final"
-          ? state.finalDone
-          : state.played.includes(session.id))
-      );
-    }
-
-    function wagerSettled(session) {
-      const required = session.mode === "double"
-        ? [session.team]
-        : state.teams.map((_, index) => index);
-
-      return session.mode !== "normal" &&
-        required.every(index =>
-          session.applied[index] || Number(session.bids[index]) === 0
-        );
-    }
-
-    function resumeWager() {
-      const session = pendingWager();
-      if (active() || !session) return false;
-
-      state.activeId = session.id;
-      save();
-      renderDialog();
-      return true;
-    }
-
-    function openClue(id) {
-      if (
-        active() ||
-        !clues.some(clue => clue.id === id) ||
-        state.played.includes(id)
-      ) return false;
-
-      const pending = pendingWager();
-
-      if (pending && pending.id !== id) {
-        resumeWager();
-        notify("Score this bet, or choose Skip.");
-        return false;
-      }
-
-      state.sessions[id] ??= newSession(id);
-      state.activeId = id;
-      save();
-      renderDialog();
-      return true;
-    }
-
-    function openFinal() {
-      if (active()) return false;
-
-      const pending = pendingWager();
-
-      if (pending && pending.id !== "final") {
-        resumeWager();
-        notify("Score this bet, or choose Skip.");
-        return false;
-      }
-
-      state.sessions.final ??= newSession("final");
-      state.activeId = "final";
-      save();
-      renderDialog();
-      return true;
-    }
-
-    function renderDialog() {
-      const session = active();
-      const clue = question();
-
-      if (!session || !clue) return;
-      clearClock();
-
-      $("#clueLabel").textContent =
-        session.mode === "final"
-          ? `FINAL JEOPARDY · ${clue.category}`
-          : session.mode === "double"
-            ? `DAILY DOUBLE · ${clue.category}`
+    ${pending.length ? `
+      <div class="pending-wager">
+        ${pending.map(session => {
+          const clue = clues.find(item => item.id === session.id);
+          const label = session.id === "final"
+            ? "Final Jeopardy"
             : `${clue.category} · ${money(clue.value)}`;
 
-      $("#clueText").textContent =
-        session.stage === "bid"
-          ? session.mode === "double" ? "Daily Double!" : clue.category
-          : clue.text;
-
-      $("#clueText").classList.toggle(
-        "special-title",
-        session.stage === "bid"
-      );
-
-      $("#answerText").textContent = clue.answer;
-
-      const source = sources[clue.source];
-
-      $("#sourceText").innerHTML = `
-        ${clue.note ? `<p>${esc(clue.note)}</p>` : ""}
-        <p>
-          <a href="${source.evidence}" target="_blank" rel="noopener">
-            ${esc(source.type)}
-          </a>
-        </p>
-      `;
-
-      $("#sourceDetails").open = false;
-      $("#answerPanel").hidden = !session.answerShown;
-      $("#wagerPanel").hidden = session.stage !== "bid";
-      $("#awardRow").hidden = session.stage !== "question";
-      $("#doneBtn").hidden = session.stage !== "question";
-      $("#revealBtn").hidden =
-        session.stage !== "question" || session.answerShown;
-      $("#answeredBtn").hidden = true;
-      $("#countdown").hidden =
-        session.mode !== "double" || session.stage !== "question";
-      $("#clueUndoBtn").disabled = !state.history.length;
-
-      $("#skipBtn").hidden =
-        session.mode === "normal" ||
-        session.skipped ||
-        session.stage !== "question" ||
-        wagerSettled(session);
-
-      $("#skipBtn").disabled = clockRunning();
-
-      if (session.stage === "bid") {
-        renderBids();
-      } else {
-        renderScoring();
-
-        if (session.mode === "double") {
-          startClock();
-        } else {
-          $("#revealBtn").disabled = false;
-        }
-      }
-
-      if (!$("#clueDialog").open) {
-        $("#clueDialog").showModal();
-      }
-    }
-
-    // WAGERS
-
-    function wagerLimit(session, index) {
-      return session.mode === "final"
-        ? Math.max(0, session.bases[index])
-        : doubleLimit(session.bases[index]);
-    }
-
-    function renderBids() {
-      const session = active();
-      session.bases = state.teams.map(team => team.score);
-
-      if (session.mode === "double") {
-        if (state.teams[session.team]?.score <= 0) {
-          const eligible = state.teams.findIndex(team => team.score > 0);
-
-          if (eligible >= 0) {
-            session.team = eligible;
-          }
-        }
-
-        const limit = wagerLimit(session, session.team);
-
-        $("#wagerPanel").innerHTML = `
-          <form id="doubleBidForm" class="double-bid">
-            <label>
-              Team
-              <select id="doubleTeam">
-                ${state.teams.map((team, index) => `
-                  <option
-                    value="${index}"
-                    ${session.team === index ? "selected" : ""}
-                    ${team.score <= 0 ? "disabled" : ""}
-                  >
-                    ${esc(team.name)} · ${money(team.score)}
-                  </option>
-                `).join("")}
-              </select>
-            </label>
-
-            <label>
-              ${limit
-                ? `Bet · up to ${money(limit)}`
-                : "Positive balance required"}
-              <input
-                id="doubleAmount"
-                type="number"
-                min="1"
-                max="${limit}"
-                step="1"
-                placeholder="$"
-                ${limit ? "" : "disabled"}
-                required
-              >
-            </label>
-
+          return `
             <button
-              class="primary"
-              type="submit"
-              ${limit ? "" : "disabled"}
-            >Lock bet · 8 seconds</button>
-          </form>
-        `;
-
-        $("#doubleTeam").onchange = event => {
-          session.team = Number(event.target.value);
-          renderBids();
-        };
-
-        $("#doubleBidForm").onsubmit = event => {
-          event.preventDefault();
-          lockDouble(session.team, $("#doubleAmount").value);
-        };
-      } else {
-        $("#wagerPanel").innerHTML = `
-          <form id="finalBidForm">
-            <div class="bid-grid">
-              ${state.teams.map((team, index) => `
-                <label class="bid-card">
-                  <strong>${esc(team.name)}</strong>
-                  <span>
-                    Available ${money(Math.max(0, session.bases[index]))}
-                  </span>
-                  <input
-                    data-bid="${index}"
-                    aria-label="${esc(team.name)} bid"
-                    type="number"
-                    min="0"
-                    max="${wagerLimit(session, index)}"
-                    step="1"
-                    value="${esc(session.bids[index])}"
-                    placeholder="$"
-                    ${session.bases[index] <= 0 ? "readonly" : ""}
-                    required
-                  >
-                </label>
-              `).join("")}
-            </div>
-
-            <button class="primary" type="submit">
-              Lock bids · Show question
-            </button>
-          </form>
-        `;
-
-        document.querySelectorAll("[data-bid]").forEach(input => {
-          input.oninput = () => {
-            session.bids[Number(input.dataset.bid)] = input.value;
-          };
-        });
-
-        $("#finalBidForm").onsubmit = event => {
-          event.preventDefault();
-          lockFinal(session.bids);
-        };
-      }
-    }
-
-    function lockDouble(team, raw) {
-      const session = active();
-
-      if (
-        !session ||
-        session.mode !== "double" ||
-        session.stage !== "bid" ||
-        !Number.isInteger(team) ||
-        !state.teams[team]
-      ) return false;
-
-      const amount = Number(raw);
-
-      if (
-        raw === "" ||
-        !Number.isInteger(amount) ||
-        amount < 1 ||
-        amount > doubleLimit(state.teams[team].score)
-      ) {
-        notify("Check the bet amount.");
-        return false;
-      }
-
-      session.team = team;
-      session.bids[team] = amount;
-      session.stage = "question";
-      session.duration = doubleDuration;
-      session.deadline = Date.now() + doubleDuration;
-      session.remaining = doubleDuration;
-
-      save();
-      renderDialog();
-      return true;
-    }
-
-    function lockFinal(raw) {
-      const session = active();
-
-      if (
-        !session ||
-        session.mode !== "final" ||
-        session.stage !== "bid" ||
-        !Array.isArray(raw) ||
-        raw.length !== state.teams.length
-      ) return false;
-
-      const bids = raw.map(Number);
-
-      if (bids.some((bid, index) =>
-        raw[index] === "" ||
-        !Number.isInteger(bid) ||
-        bid < 0 ||
-        bid > Math.max(0, state.teams[index].score)
-      )) {
-        notify("Bids must fit each team’s available money.");
-        return false;
-      }
-
-      session.bids = bids;
-      session.bases = state.teams.map(team => team.score);
-      session.stage = "question";
-
-      save();
-      renderDialog();
-      return true;
-    }
-
-    // EIGHT-SECOND ANSWER BAR
-
-    function clearClock() {
-      if (timerId !== null) {
-        clearInterval(timerId);
-      }
-
-      timerId = null;
-    }
-
-    function clockRunning() {
-      const session = active();
-
-      return !!(
-        session &&
-        session.mode === "double" &&
-        session.stage === "question" &&
-        !session.responded &&
-        !session.expired &&
-        session.deadline > Date.now()
-      );
-    }
-
-    function tick() {
-      const session = active();
-
-      if (
-        !session ||
-        session.mode !== "double" ||
-        session.stage !== "question"
-      ) return;
-
-      // Older saved wagers may have used a six-second deadline.
-      const duration = session.duration || 6000;
-
-      const milliseconds = Math.min(
-        duration,
-        session.responded
-          ? session.remaining
-          : Math.max(0, (session.deadline || 0) - Date.now())
-      );
-
-      if (!session.responded && milliseconds <= 0 && !session.expired) {
-        session.expired = true;
-        session.remaining = 0;
-        save();
-        clearClock();
-        renderScoring();
-      }
-
-      $("#countdownFill").style.transform =
-        `scaleX(${milliseconds / duration})`;
-
-      $("#countdown").setAttribute(
-        "aria-valuemax",
-        String(duration / 1000)
-      );
-
-      $("#countdown").setAttribute(
-        "aria-valuenow",
-        String(Math.ceil(milliseconds / 100) / 10)
-      );
-
-      $("#countdown").setAttribute(
-        "aria-valuetext",
-        session.expired
-          ? "Time expired"
-          : session.responded
-            ? "Answer received"
-            : `${Math.ceil(milliseconds / 1000)} seconds remaining`
-      );
-
-      $("#answeredBtn").hidden = session.responded || session.expired;
-      $("#revealBtn").disabled = clockRunning();
-      $("#doneBtn").disabled = clockRunning();
-      $("#skipBtn").disabled = clockRunning();
-    }
-
-    function startClock() {
-      tick();
-
-      if (clockRunning()) {
-        timerId = setInterval(tick, 25);
-      }
-    }
-
-    function answered() {
-      const session = active();
-
-      if (!session || !clockRunning()) {
-        tick();
-        return false;
-      }
-
-      session.remaining = Math.max(0, session.deadline - Date.now());
-      session.responded = true;
-
-      clearClock();
-      save();
-      tick();
-      renderScoring();
-      return true;
-    }
-
-    function reveal() {
-      const session = active();
-
-      if (
-        !session ||
-        session.stage !== "question" ||
-        clockRunning()
-      ) return false;
-
-      session.answerShown = true;
-      $("#answerPanel").hidden = false;
-      $("#revealBtn").hidden = true;
-      save();
-      return true;
-    }
-
-    // SCORING
-
-    function renderScoring() {
-      const session = active();
-      const clue = question();
-
-      if (!session || session.stage !== "question") return;
-
-      const indices = session.mode === "double"
-        ? [session.team]
-        : state.teams.map((_, index) => index);
-
-      $("#awardRow").innerHTML = indices.map(index => {
-        const team = state.teams[index];
-
-        const amount = session.mode === "normal"
-          ? clue.value
-          : Number(session.bids[index]);
-
-        const disabled =
-          session.applied[index] ||
-          session.skipped ||
-          clockRunning();
-
-        return `
-          <div class="award-team">
-            <div class="team-score-heading">
-              <strong>${esc(team.name)}</strong>
-              <span>${money(team.score)}</span>
-            </div>
-
-            <div class="money-controls">
-              <button
-                class="negative-button"
-                data-minus="${index}"
-                ${disabled ? "disabled" : ""}
-                aria-label="Subtract ${money(amount)} from ${esc(team.name)}"
-              >−${money(amount)}</button>
-
-              <button
-                class="positive"
-                data-plus="${index}"
-                ${disabled ? "disabled" : ""}
-                aria-label="Add ${money(amount)} to ${esc(team.name)}"
-              >+${money(amount)}</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      document.querySelectorAll("[data-plus]").forEach(button => {
-        button.onclick = () =>
-          adjustScore(Number(button.dataset.plus), 1);
-      });
-
-      document.querySelectorAll("[data-minus]").forEach(button => {
-        button.onclick = () =>
-          adjustScore(Number(button.dataset.minus), -1);
-      });
-
-      $("#clueUndoBtn").disabled = !state.history.length;
-      $("#doneBtn").disabled = clockRunning();
-
-      $("#skipBtn").hidden =
-        session.mode === "normal" ||
-        session.skipped ||
-        wagerSettled(session);
-
-      $("#skipBtn").disabled = clockRunning();
-    }
-
-    function adjustScore(index, direction) {
-      const session = active();
-      const clue = question();
-
-      if (
-        !session ||
-        session.skipped ||
-        session.stage !== "question" ||
-        clockRunning() ||
-        !state.teams[index] ||
-        ![1, -1].includes(direction) ||
-        (session.mode === "double" && index !== session.team) ||
-        (session.mode !== "normal" && session.applied[index])
-      ) return false;
-
-      const amount = session.mode === "normal"
-        ? clue.value
-        : Number(session.bids[index]);
-
-      if (!Number.isInteger(amount) || amount < 0) return false;
-
-      checkpoint();
-      state.teams[index].score += direction * amount;
-
-      if (session.mode !== "normal") {
-        session.applied[index] = true;
-      }
-
-      save();
-      renderBoard();
-      renderScoring();
-      return true;
-    }
-
-    function completeClue(skipped = false) {
-      const session = active();
-      checkpoint();
-
-      if (skipped) {
-        session.skipped = true;
-      }
-
-      if (session.id === "final") {
-        state.finalDone = true;
-      } else if (!state.played.includes(session.id)) {
-        state.played.push(session.id);
-      }
-
-      state.activeId = null;
-      save();
-      clearClock();
-      $("#clueDialog").close();
-      renderBoard();
-      return true;
-    }
-
-    function finishClue() {
-      const session = active();
-
-      if (
-        !session ||
-        session.stage !== "question" ||
-        clockRunning()
-      ) return false;
-
-      if (
-        session.mode !== "normal" &&
-        !session.skipped &&
-        !wagerSettled(session)
-      ) {
-        notify("Use + / − to score, or Skip.");
-        return false;
-      }
-
-      return completeClue();
-    }
-
-    function skipClue() {
-      const session = active();
-
-      if (
-        !session ||
-        session.skipped ||
-        session.mode === "normal" ||
-        session.stage !== "question" ||
-        clockRunning()
-      ) return false;
-
-      return completeClue(true);
-    }
-
-    function closeClue() {
-      const session = active();
-
-      if (clockRunning()) {
-        notify("The answer bar is still running.");
-        return false;
-      }
-
-      if (
-        session &&
-        session.stage === "question" &&
-        wagerSettled(session)
-      ) {
-        return finishClue();
-      }
-
-      clearClock();
-      state.activeId = null;
-      save();
-      $("#clueDialog").close();
-      renderBoard();
-      return true;
-    }
-
-    function undo() {
-      if (!state.history.length || clockRunning()) return;
-
-      clearClock();
-
-      const previous = state.history.pop();
-      const history = state.history;
-      state = { ...previous, history };
-
-      save();
-      renderBoard();
-
-      if (active()) {
-        renderDialog();
-      } else {
-        $("#clueDialog").close();
-      }
-    }
-
-    // TEAM SETTINGS AND RESET
-
-    function panel(title, html) {
-      $("#panelTitle").textContent = title;
-      $("#panelContent").innerHTML = html;
-      $("#panelDialog").showModal();
-    }
-
-    function closePanel() {
-      $("#panelDialog").close();
-    }
-
-    function setup() {
-      if (pendingWager()) {
-        resumeWager();
-        notify("Score this bet, or choose Skip.");
-        return;
-      }
-
-      panel("Teams", `
-        <form id="settingsForm">
-          <label class="field">
-            Teams
-            <select id="teamCount">
-              ${[1, 2, 3, 4, 5, 6].map(number => `
-                <option ${number === state.teams.length ? "selected" : ""}>
-                  ${number}
-                </option>
-              `).join("")}
-            </select>
-          </label>
-
-          <div class="team-field-labels">
-            <span>Name</span>
-            <span>Score</span>
-          </div>
-
-          <div id="teamFields"></div>
-
-          <div class="form-actions">
-            <button type="button" id="newGameBtn" class="danger">
-              Reset game
-            </button>
-            <button type="submit" class="primary">Save</button>
-          </div>
-        </form>
-      `);
-
-      const staged = Array.from({ length: 6 }, (_, index) => ({
-        ...(state.teams[index] || {
-          name: defaultNames[index] ||
-            `TEAM ${String.fromCharCode(65 + index)}`,
-          score: 0
-        })
-      }));
-
-      function fields() {
-        const count = Number($("#teamCount").value);
-
-        $("#teamFields").innerHTML = staged
-          .slice(0, count)
-          .map((team, index) => `
-            <div class="field">
-              <input
-                type="text"
-                id="name${index}"
-                aria-label="Team ${index + 1} name"
-                maxlength="24"
-                value="${esc(team.name)}"
-                required
-              >
-
-              <input
-                type="number"
-                id="score${index}"
-                aria-label="Team ${index + 1} score"
-                value="${team.score}"
-                step="1"
-                min="-1000000"
-                max="1000000"
-                required
-              >
-            </div>
-          `).join("");
-
-        document.querySelectorAll("#teamFields input").forEach(input => {
-          input.oninput = () => {
-            const index = Number(input.id.replace(/\D/g, ""));
-
-            if (input.id.startsWith("name")) {
-              staged[index].name = input.value;
-            } else {
-              staged[index].score = Number(input.value);
-            }
-          };
-        });
-      }
-
-      fields();
-      $("#teamCount").onchange = fields;
-
-      $("#settingsForm").onsubmit = event => {
-        event.preventDefault();
-
-        const teams = staged.slice(0, Number($("#teamCount").value));
-
-        if (teams.some(team =>
-          !team.name.trim() ||
-          !Number.isInteger(team.score) ||
-          Math.abs(team.score) > 1000000
-        )) return;
-
-        checkpoint();
-
-        state.teams = teams.map(team => ({
-          ...team,
-          name: team.name.trim()
-        }));
-
-        for (const [id, session] of Object.entries(state.sessions)) {
-          if (session.stage === "bid") {
-            delete state.sessions[id];
-          }
-        }
-
-        save();
-        closePanel();
-        renderBoard();
-      };
-
-      $("#newGameBtn").onclick = confirmReset;
-    }
-
-    function confirmReset() {
-      closePanel();
-
-      panel("Reset scores and board?", `
-        <div class="form-actions">
-          <button id="cancelReset">Cancel</button>
-          <button id="confirmReset" class="primary">Reset</button>
+              data-resume="${session.id}"
+              class="quiet"
+            >Resume ${esc(label)}</button>
+          `;
+        }).join("")}
+      </div>
+    ` : ""}
+
+    <section id="board" class="board" aria-label="Jeopardy board">
+      ${categories.map((category, categoryIndex) => `
+        <div class="category">
+          <h2>${esc(category.name)}</h2>
+          ${clues
+            .filter(clue => clue.id.startsWith(categoryIndex + "-"))
+            .map(clue => {
+              const used = state.played.includes(clue.id);
+
+              return `
+                <button
+                  class="tile ${used ? "used" : ""}"
+                  data-clue="${clue.id}"
+                  ${used ? "disabled" : ""}
+                  aria-label="${esc(category.name)} for ${clue.value}${used ? ", played" : ""}"
+                >${used ? "" : money(clue.value)}</button>
+              `;
+            }).join("")}
         </div>
-      `);
+      `).join("")}
+    </section>
 
-      $("#cancelReset").onclick = closePanel;
+    <section id="scores" class="scores" aria-label="Team scores">
+      ${scoreHTML()}
+    </section>
 
-      $("#confirmReset").onclick = () => {
-        checkpoint();
+    <footer>
+      <div>
+        <button
+          id="undoBtn"
+          class="quiet"
+          ${state.history.length ? "" : "disabled"}
+        >↶ Undo</button>
+        <button id="sourcesBtn" class="quiet">Sources</button>
+      </div>
+      <button id="finalBtn" class="primary">
+        Final Jeopardy${state.finalDone ? " ✓" : ""}
+      </button>
+    </footer>
+  `;
 
-        const { history, teams } = state;
+  document.querySelectorAll("[data-clue]").forEach(button => {
+    button.onclick = () => openClue(button.dataset.clue);
+  });
 
-        state = {
-          ...fresh(),
-          history,
-          teams: teams.map(team => ({ ...team, score: 0 }))
-        };
+  document.querySelectorAll("[data-resume]").forEach(button => {
+    button.onclick = () => resumeWager(button.dataset.resume);
+  });
 
-        save();
-        closePanel();
-        renderBoard();
-      };
+  $("#undoBtn").onclick = undo;
+  $("#finalBtn").onclick = openFinal;
+  $("#sourcesBtn").onclick = showSources;
+}
+
+// Clue sessions.
+function newSession(id) {
+  const mode = id === "final"
+    ? "final"
+    : doubles.includes(id) ? "double" : "normal";
+
+  return {
+    id,
+    mode,
+    stage: mode === "normal" ? "question" : "bid",
+    answerShown: false,
+    team: 0,
+    bids: state.teams.map(team => team.score <= 0 ? "0" : ""),
+    bases: state.teams.map(team => team.score),
+    applied: state.teams.map(() => false),
+    deadline: null,
+    responded: false,
+    expired: false,
+    duration: doubleDuration,
+    remaining: doubleDuration
+  };
+}
+
+function pendingWagers() {
+  return Object.values(state.sessions).filter(session =>
+    session.mode !== "normal" &&
+    session.stage === "question" &&
+    !(session.id === "final"
+      ? state.finalDone
+      : state.played.includes(session.id))
+  );
+}
+
+function pendingWager() {
+  return pendingWagers()[0];
+}
+
+function wagerSettled(session) {
+  const required = session.mode === "double"
+    ? [session.team]
+    : state.teams.map((_, index) => index);
+
+  return session.mode !== "normal" &&
+    required.every(index =>
+      session.applied[index] || Number(session.bids[index]) === 0
+    );
+}
+
+function resumeWager(id) {
+  const session = id
+    ? pendingWagers().find(item => item.id === id)
+    : pendingWager();
+
+  if (active() || !session) return false;
+
+  state.activeId = session.id;
+  save();
+  renderDialog();
+  return true;
+}
+
+function openClue(id) {
+  if (
+    active() ||
+    !clues.some(clue => clue.id === id) ||
+    state.played.includes(id)
+  ) return false;
+
+  // Other unfinished wagers do not block this clue.
+  state.sessions[id] ??= newSession(id);
+  state.activeId = id;
+  save();
+  renderDialog();
+  return true;
+}
+
+function openFinal() {
+  if (active()) return false;
+
+  // Other unfinished wagers do not block Final Jeopardy.
+  state.sessions.final ??= newSession("final");
+  state.activeId = "final";
+  save();
+  renderDialog();
+  return true;
+}
+
+function renderDialog() {
+  const session = active();
+  const clue = question();
+  if (!session || !clue) return;
+
+  clearClock();
+
+  $("#clueLabel").textContent =
+    session.mode === "final"
+      ? `FINAL JEOPARDY · ${clue.category}`
+      : session.mode === "double"
+        ? `DAILY DOUBLE · ${clue.category}`
+        : `${clue.category} · ${money(clue.value)}`;
+
+  $("#clueText").textContent = session.stage === "bid"
+    ? session.mode === "double" ? "Daily Double!" : clue.category
+    : clue.text;
+
+  $("#clueText").classList.toggle(
+    "special-title",
+    session.stage === "bid"
+  );
+
+  $("#answerText").textContent = clue.answer;
+
+  const source = sources[clue.source];
+
+  $("#sourceText").innerHTML = `
+    ${clue.note ? `<p>${esc(clue.note)}</p>` : ""}
+    <p>
+      <a href="${source.evidence}" target="_blank" rel="noopener">
+        ${esc(source.type)}
+      </a>
+    </p>
+  `;
+
+  $("#sourceDetails").open = false;
+  $("#answerPanel").hidden = !session.answerShown;
+  $("#wagerPanel").hidden = session.stage !== "bid";
+  $("#awardRow").hidden = session.stage !== "question";
+  $("#doneBtn").hidden = session.stage !== "question";
+  $("#revealBtn").hidden =
+    session.stage !== "question" || session.answerShown;
+  $("#answeredBtn").hidden = true;
+  $("#countdown").hidden =
+    session.mode !== "double" || session.stage !== "question";
+  $("#clueUndoBtn").disabled = !state.history.length;
+
+  $("#skipBtn").hidden =
+    session.mode === "normal" ||
+    session.skipped ||
+    session.stage !== "question" ||
+    wagerSettled(session);
+
+  // Skip is always available when shown.
+  $("#skipBtn").disabled = false;
+
+  if (session.stage === "bid") {
+    renderBids();
+  } else {
+    renderScoring();
+
+    if (session.mode === "double") {
+      startClock();
+    } else {
+      $("#revealBtn").disabled = false;
+    }
+  }
+
+  if (!$("#clueDialog").open) {
+    $("#clueDialog").showModal();
+  }
+}
+
+// Wager entry.
+function wagerLimit(session, index) {
+  return session.mode === "final"
+    ? Math.max(0, session.bases[index])
+    : doubleLimit(session.bases[index]);
+}
+
+function renderBids() {
+  const session = active();
+  session.bases = state.teams.map(team => team.score);
+
+  if (session.mode === "double") {
+    if (!state.teams[session.team]) {
+      session.team = 0;
     }
 
-    function showSources() {
-      panel("Sources", `
-        <p>
-          <a href="${sources.lunar.url}" target="_blank" rel="noopener">
-            Lunar Ice Mining For Multiplanetary Travel
-          </a>
-        </p>
+    const limit = wagerLimit(session, session.team);
 
-        <p>
-          <a href="${sources.mars.url}" target="_blank" rel="noopener">
-            Relentless: A city on Mars
-          </a>
-        </p>
+    $("#wagerPanel").innerHTML = `
+      <form id="doubleBidForm" class="double-bid">
+        <label>
+          Team
+          <select id="doubleTeam">
+            ${state.teams.map((team, index) => `
+              <option
+                value="${index}"
+                ${session.team === index ? "selected" : ""}
+              >${esc(team.name)} · ${money(team.score)}</option>
+            `).join("")}
+          </select>
+        </label>
 
-        <p>
-          <a href="https://www.starpath.space/" target="_blank" rel="noopener">
-            Starpath.space
-          </a>
-        </p>
+        <label>
+          Bet · up to ${money(limit)}
+          <input
+            id="doubleAmount"
+            type="number"
+            min="1"
+            max="${limit}"
+            step="1"
+            placeholder="$"
+            required
+          >
+        </label>
 
-        <p class="small">
-          Podcast clues use published notes and excerpts; full transcripts
-          were unavailable. Additional clues use Starpath’s website and
-          NASA science background.
-        </p>
+        <button class="primary" type="submit">
+          Lock bet · 8 seconds
+        </button>
 
-        <p class="small">
-          <a href="${sources.lunar.evidence}" target="_blank" rel="noopener">
-            Sourcery notes
-          </a>
-          ·
-          <a href="${sources.mars.evidence}" target="_blank" rel="noopener">
-            Relentless excerpt
-          </a>
-          ·
-          <a href="${sources.nasa.url}" target="_blank" rel="noopener">
-            NASA
-          </a>
-        </p>
-      `);
-    }
+        <button id="bypassBetBtn" class="quiet" type="button">
+          Play for ${money(question().value)}
+        </button>
+      </form>
+    `;
 
-    // CONTROLS
+    $("#bypassBetBtn").onclick = playWithoutBet;
 
-    $("#setupBtn").onclick = setup;
-    $("#closePanel").onclick = closePanel;
-    $("#closeClue").onclick = closeClue;
-    $("#revealBtn").onclick = reveal;
-    $("#answeredBtn").onclick = answered;
-    $("#doneBtn").onclick = finishClue;
-    $("#skipBtn").onclick = skipClue;
-    $("#clueUndoBtn").onclick = undo;
-
-    $("#clueDialog").addEventListener("cancel", event => {
-      event.preventDefault();
-      closeClue();
-    });
-
-    $("#fullscreenBtn").onclick = async () => {
-      try {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        } else if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
-        } else {
-          notify("Use your browser’s full-screen control.");
-        }
-      } catch {
-        notify("Use your browser’s full-screen control.");
-      }
+    $("#doubleTeam").onchange = event => {
+      session.team = Number(event.target.value);
+      renderBids();
     };
 
-    document.addEventListener("keydown", event => {
-      if (
-        event.key.toLowerCase() === "r" &&
-        active() &&
-        !["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)
-      ) {
-        event.preventDefault();
-        reveal();
-      }
-    });
+    $("#doubleBidForm").onsubmit = event => {
+      event.preventDefault();
+      lockDouble(session.team, $("#doubleAmount").value);
+    };
+  } else {
+    $("#wagerPanel").innerHTML = `
+      <form id="finalBidForm">
+        <div class="bid-grid">
+          ${state.teams.map((team, index) => `
+            <label class="bid-card">
+              <strong>${esc(team.name)}</strong>
+              <span>
+                Available ${money(Math.max(0, session.bases[index]))}
+              </span>
+              <input
+                data-bid="${index}"
+                aria-label="${esc(team.name)} bid"
+                type="number"
+                min="0"
+                max="${wagerLimit(session, index)}"
+                step="1"
+                value="${esc(session.bids[index])}"
+                placeholder="$"
+                ${session.bases[index] <= 0 ? "readonly" : ""}
+                required
+              >
+            </label>
+          `).join("")}
+        </div>
 
-    document.addEventListener("visibilitychange", () => {
-      if (active()?.mode === "double") tick();
-    });
+        <button class="primary" type="submit">
+          Lock bids · Show question
+        </button>
+      </form>
+    `;
 
-    window.addEventListener("focus", () => {
-      if (active()?.mode === "double") tick();
-    });
-
-    // START
-
-    renderBoard();
-    if (active()) renderDialog();
-    save();
-
-    // Optional browser integration. The game works without this API.
-    if (document.modelContext?.registerTool) {
-      const lifecycle = new AbortController();
-
-      const register = tool => {
-        try {
-          Promise.resolve(
-            document.modelContext.registerTool(
-              tool,
-              { signal: lifecycle.signal }
-            )
-          ).catch(() => {});
-        } catch {}
+    document.querySelectorAll("[data-bid]").forEach(input => {
+      input.oninput = () => {
+        session.bids[Number(input.dataset.bid)] = input.value;
       };
+    });
 
-      register({
-        name: "read_starpath_game",
-        title: "Read game",
-        description: "Read team scores and the board without revealing answers or hidden Daily Double locations.",
-        inputSchema: {
-          type: "object",
-          properties: {},
-          additionalProperties: false
-        },
-        annotations: { readOnlyHint: true },
-        execute: () => ({
-          teams: state.teams,
-          played: state.played,
-          finalDone: state.finalDone,
-          categories: categories.map(category => category.name)
-        })
-      });
+    $("#finalBidForm").onsubmit = event => {
+      event.preventDefault();
+      lockFinal(session.bids);
+    };
+  }
+}
 
-      register({
-        name: "open_starpath_clue",
-        title: "Open a clue",
-        description: "Open an unplayed clue or its Daily Double bidding screen, without revealing answers or changing scores.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            clueId: {
-              type: "string",
-              enum: clues.map(clue => clue.id)
-            }
-          },
-          required: ["clueId"],
-          additionalProperties: false
-        },
-        execute: input => {
-          if (
-            !input ||
-            typeof input.clueId !== "string" ||
-            active() ||
-            $("#panelDialog").open ||
-            !openClue(input.clueId)
-          ) {
-            throw new Error("Choose an available clue.");
-          }
+function lockDouble(team, raw) {
+  const session = active();
 
-          return {
-            id: state.activeId,
-            stage: active().stage,
-            ...(active().stage === "question"
-              ? {
-                  text: question().text,
-                  value: question().value
-                }
-              : {})
-          };
-        }
-      });
+  if (
+    !session ||
+    session.mode !== "double" ||
+    session.stage !== "bid" ||
+    !Number.isInteger(team) ||
+    !state.teams[team]
+  ) return false;
 
-      window.addEventListener(
-        "pagehide",
-        () => lifecycle.abort(),
-        { once: true }
-      );
+  const amount = Number(raw);
+
+  if (
+    raw === "" ||
+    !Number.isInteger(amount) ||
+    amount < 1 ||
+    amount > doubleLimit(state.teams[team].score)
+  ) {
+    notify("Check the bet amount.");
+    return false;
+  }
+
+  session.team = team;
+  session.bids[team] = amount;
+  session.stage = "question";
+  session.duration = doubleDuration;
+  session.deadline = Date.now() + doubleDuration;
+  session.remaining = doubleDuration;
+
+  save();
+  renderDialog();
+  return true;
+}
+
+// Bypass amount entry and play for the clue's printed value.
+// Works with positive, zero, or negative scores.
+function playWithoutBet() {
+  const session = active();
+
+  if (
+    !session ||
+    session.mode !== "double" ||
+    session.stage !== "bid"
+  ) return false;
+
+  return lockDouble(session.team, question().value);
+}
+
+function lockFinal(raw) {
+  const session = active();
+
+  if (
+    !session ||
+    session.mode !== "final" ||
+    session.stage !== "bid" ||
+    !Array.isArray(raw) ||
+    raw.length !== state.teams.length
+  ) return false;
+
+  const bids = raw.map(Number);
+
+  if (bids.some((bid, index) =>
+    raw[index] === "" ||
+    !Number.isInteger(bid) ||
+    bid < 0 ||
+    bid > Math.max(0, state.teams[index].score)
+  )) {
+    notify("Bids must fit each team’s available money.");
+    return false;
+  }
+
+  session.bids = bids;
+  session.bases = state.teams.map(team => team.score);
+  session.stage = "question";
+
+  save();
+  renderDialog();
+  return true;
+}
+
+// Eight-second white answer bar.
+function clearClock() {
+  if (timerId !== null) {
+    clearInterval(timerId);
+  }
+  timerId = null;
+}
+
+function clockRunning() {
+  const session = active();
+
+  return !!(
+    session &&
+    session.mode === "double" &&
+    session.stage === "question" &&
+    !session.responded &&
+    !session.expired &&
+    session.deadline > Date.now()
+  );
+}
+
+function tick() {
+  const session = active();
+
+  if (
+    !session ||
+    session.mode !== "double" ||
+    session.stage !== "question"
+  ) return;
+
+  // Honor original deadlines in older saved games.
+  const duration = session.duration || 6000;
+
+  const milliseconds = Math.min(
+    duration,
+    session.responded
+      ? session.remaining
+      : Math.max(0, (session.deadline || 0) - Date.now())
+  );
+
+  if (!session.responded && milliseconds <= 0 && !session.expired) {
+    session.expired = true;
+    session.remaining = 0;
+    save();
+    clearClock();
+    renderScoring();
+  }
+
+  $("#countdownFill").style.transform =
+    `scaleX(${milliseconds / duration})`;
+
+  $("#countdown").setAttribute(
+    "aria-valuemax",
+    String(duration / 1000)
+  );
+
+  $("#countdown").setAttribute(
+    "aria-valuenow",
+    String(Math.ceil(milliseconds / 100) / 10)
+  );
+
+  $("#countdown").setAttribute(
+    "aria-valuetext",
+    session.expired
+      ? "Time expired"
+      : session.responded
+        ? "Answer received"
+        : `${Math.ceil(milliseconds / 1000)} seconds remaining`
+  );
+
+  $("#answeredBtn").hidden = session.responded || session.expired;
+  $("#revealBtn").disabled = clockRunning();
+  $("#doneBtn").disabled = clockRunning();
+  $("#skipBtn").disabled = false;
+}
+
+function startClock() {
+  tick();
+  if (clockRunning()) {
+    timerId = setInterval(tick, 25);
+  }
+}
+
+function answered() {
+  const session = active();
+
+  if (!session || !clockRunning()) {
+    tick();
+    return false;
+  }
+
+  session.remaining = Math.max(0, session.deadline - Date.now());
+  session.responded = true;
+
+  clearClock();
+  save();
+  tick();
+  renderScoring();
+  return true;
+}
+
+function reveal() {
+  const session = active();
+
+  if (
+    !session ||
+    session.stage !== "question" ||
+    clockRunning()
+  ) return false;
+
+  session.answerShown = true;
+  $("#answerPanel").hidden = false;
+  $("#revealBtn").hidden = true;
+  save();
+  return true;
+}
+
+// Scoring.
+function renderScoring() {
+  const session = active();
+  const clue = question();
+
+  if (!session || session.stage !== "question") return;
+
+  const indices = session.mode === "double"
+    ? [session.team]
+    : state.teams.map((_, index) => index);
+
+  $("#awardRow").innerHTML = indices.map(index => {
+    const team = state.teams[index];
+    const amount = session.mode === "normal"
+      ? clue.value
+      : Number(session.bids[index] ?? 0);
+
+    const disabled =
+      session.applied[index] ||
+      session.skipped ||
+      (session.id === "final" && state.finalDone) ||
+      clockRunning();
+
+    return `
+      <div class="award-team">
+        <div class="team-score-heading">
+          <strong>${esc(team.name)}</strong>
+          <span>${money(team.score)}</span>
+        </div>
+        <div class="money-controls">
+          <button
+            class="negative-button"
+            data-minus="${index}"
+            ${disabled ? "disabled" : ""}
+            aria-label="Subtract ${money(amount)} from ${esc(team.name)}"
+          >−${money(amount)}</button>
+
+          <button
+            class="positive"
+            data-plus="${index}"
+            ${disabled ? "disabled" : ""}
+            aria-label="Add ${money(amount)} to ${esc(team.name)}"
+          >+${money(amount)}</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  document.querySelectorAll("[data-plus]").forEach(button => {
+    button.onclick = () => adjustScore(Number(button.dataset.plus), 1);
+  });
+
+  document.querySelectorAll("[data-minus]").forEach(button => {
+    button.onclick = () => adjustScore(Number(button.dataset.minus), -1);
+  });
+
+  $("#clueUndoBtn").disabled = !state.history.length;
+  $("#doneBtn").disabled = clockRunning();
+  $("#skipBtn").hidden =
+    session.mode === "normal" ||
+    session.skipped ||
+    wagerSettled(session);
+
+  $("#skipBtn").disabled = false;
+}
+
+function adjustScore(index, direction) {
+  const session = active();
+  const clue = question();
+
+  if (
+    !session ||
+    session.skipped ||
+    (session.id === "final" && state.finalDone) ||
+    session.stage !== "question" ||
+    clockRunning() ||
+    !state.teams[index] ||
+    ![1, -1].includes(direction) ||
+    (session.mode === "double" && index !== session.team) ||
+    (session.mode !== "normal" && session.applied[index])
+  ) return false;
+
+  const amount = session.mode === "normal"
+    ? clue.value
+    : Number(session.bids[index]);
+
+  if (!Number.isInteger(amount) || amount < 0) return false;
+
+  checkpoint();
+  state.teams[index].score += direction * amount;
+
+  if (session.mode !== "normal") {
+    session.applied[index] = true;
+  }
+
+  save();
+  renderBoard();
+  renderScoring();
+  return true;
+}
+
+function completeClue(skipped = false) {
+  const session = active();
+  checkpoint();
+
+  if (skipped) {
+    session.skipped = true;
+  }
+
+  if (session.id === "final") {
+    state.finalDone = true;
+  } else if (!state.played.includes(session.id)) {
+    state.played.push(session.id);
+  }
+
+  state.activeId = null;
+  save();
+  clearClock();
+  $("#clueDialog").close();
+  renderBoard();
+  return true;
+}
+
+function finishClue() {
+  const session = active();
+
+  if (
+    !session ||
+    session.stage !== "question" ||
+    clockRunning()
+  ) return false;
+
+  if (
+    session.mode !== "normal" &&
+    !session.skipped &&
+    !wagerSettled(session)
+  ) {
+    notify("Use + / − to score, or Skip.");
+    return false;
+  }
+
+  return completeClue();
+}
+
+// Skip can be used immediately, even while the timer runs.
+function skipClue() {
+  const session = active();
+
+  if (
+    !session ||
+    session.skipped ||
+    session.mode === "normal" ||
+    session.stage !== "question"
+  ) return false;
+
+  return completeClue(true);
+}
+
+// Returning to the board never waits for the timer or unfinished wagers.
+// Deadlines remain saved, so returning does not restart the clock.
+function closeClue() {
+  const session = active();
+
+  if (
+    session &&
+    session.stage === "question" &&
+    wagerSettled(session)
+  ) {
+    return finishClue();
+  }
+
+  clearClock();
+  state.activeId = null;
+  save();
+  $("#clueDialog").close();
+  renderBoard();
+  return true;
+}
+
+function undo() {
+  if (!state.history.length || clockRunning()) return;
+
+  clearClock();
+  const previous = state.history.pop();
+  const history = state.history;
+  state = { ...previous, history };
+
+  save();
+  renderBoard();
+
+  if (active()) {
+    renderDialog();
+  } else {
+    $("#clueDialog").close();
+  }
+}
+
+// Team settings.
+function panel(title, html) {
+  $("#panelTitle").textContent = title;
+  $("#panelContent").innerHTML = html;
+  $("#panelDialog").showModal();
+}
+
+function closePanel() {
+  $("#panelDialog").close();
+}
+
+// Changing the number of teams closes outstanding wagers without
+// applying any new points. Undo retains the prior game state.
+function closeWagersForTeamChange() {
+  for (const session of pendingWagers()) {
+    session.skipped = true;
+
+    if (session.id === "final") {
+      state.finalDone = true;
+    } else if (!state.played.includes(session.id)) {
+      state.played.push(session.id);
     }
-  </script>
+  }
+}
+
+function setup() {
+  panel("Teams", `
+    <form id="settingsForm">
+      <label class="field">
+        Teams
+        <select id="teamCount">
+          ${[1, 2, 3, 4, 5, 6].map(number => `
+            <option ${number === state.teams.length ? "selected" : ""}>
+              ${number}
+            </option>
+          `).join("")}
+        </select>
+      </label>
+
+      <div class="team-field-labels">
+        <span>Name</span>
+        <span>Score</span>
+      </div>
+
+      <div id="teamFields"></div>
+
+      <div class="form-actions">
+        <button type="button" id="newGameBtn" class="danger">
+          Reset game
+        </button>
+        <button type="submit" class="primary">Save</button>
+      </div>
+    </form>
+  `);
+
+  const staged = Array.from({ length: 6 }, (_, index) => ({
+    ...(state.teams[index] || {
+      name: defaultNames[index] ||
+        `TEAM ${String.fromCharCode(65 + index)}`,
+      score: 0
+    })
+  }));
+
+  function fields() {
+    const count = Number($("#teamCount").value);
+
+    $("#teamFields").innerHTML = staged
+      .slice(0, count)
+      .map((team, index) => `
+        <div class="field">
+          <input
+            type="text"
+            id="name${index}"
+            aria-label="Team ${index + 1} name"
+            maxlength="24"
+            value="${esc(team.name)}"
+            required
+          >
+          <input
+            type="number"
+            id="score${index}"
+            aria-label="Team ${index + 1} score"
+            value="${team.score}"
+            step="1"
+            min="-1000000"
+            max="1000000"
+            required
+          >
+        </div>
+      `).join("");
+
+    document.querySelectorAll("#teamFields input").forEach(input => {
+      input.oninput = () => {
+        const index = Number(input.id.replace(/\D/g, ""));
+
+        if (input.id.startsWith("name")) {
+          staged[index].name = input.value;
+        } else {
+          staged[index].score = Number(input.value);
+        }
+      };
+    });
+  }
+
+  fields();
+  $("#teamCount").onchange = fields;
+
+  $("#settingsForm").onsubmit = event => {
+    event.preventDefault();
+
+    const teams = staged.slice(0, Number($("#teamCount").value));
+
+    if (teams.some(team =>
+      !team.name.trim() ||
+      !Number.isInteger(team.score) ||
+      Math.abs(team.score) > 1000000
+    )) return;
+
+    checkpoint();
+
+    const countChanged = teams.length !== state.teams.length;
+
+    if (countChanged) {
+      closeWagersForTeamChange();
+    }
+
+    state.teams = teams.map(team => ({
+      ...team,
+      name: team.name.trim()
+    }));
+
+    for (const [id, session] of Object.entries(state.sessions)) {
+      if (session.stage === "bid") {
+        delete state.sessions[id];
+      }
+    }
+
+    save();
+    closePanel();
+    renderBoard();
+
+    if (countChanged) {
+      notify("Team count changed; open bets closed.");
+    }
+  };
+
+  $("#newGameBtn").onclick = confirmReset;
+}
+
+function confirmReset() {
+  closePanel();
+
+  panel("Reset scores and board?", `
+    <div class="form-actions">
+      <button id="cancelReset">Cancel</button>
+      <button id="confirmReset" class="primary">Reset</button>
+    </div>
+  `);
+
+  $("#cancelReset").onclick = closePanel;
+
+  $("#confirmReset").onclick = () => {
+    checkpoint();
+
+    const { history, teams } = state;
+
+    state = {
+      ...fresh(),
+      history,
+      teams: teams.map(team => ({ ...team, score: 0 }))
+    };
+
+    save();
+    closePanel();
+    renderBoard();
+  };
+}
+
+function showSources() {
+  panel("Sources", `
+    <p>
+      <a href="${sources.lunar.url}" target="_blank" rel="noopener">
+        Lunar Ice Mining For Multiplanetary Travel
+      </a>
+    </p>
+    <p>
+      <a href="${sources.mars.url}" target="_blank" rel="noopener">
+        Relentless: A city on Mars
+      </a>
+    </p>
+    <p>
+      <a href="https://www.starpath.space/" target="_blank" rel="noopener">
+        Starpath.space
+      </a>
+    </p>
+    <p class="small">
+      Podcast clues use published notes and excerpts; full transcripts
+      were unavailable. Additional clues use Starpath’s website and
+      NASA science background.
+    </p>
+    <p class="small">
+      <a href="${sources.lunar.evidence}" target="_blank" rel="noopener">
+        Sourcery notes
+      </a>
+      ·
+      <a href="${sources.mars.evidence}" target="_blank" rel="noopener">
+        Relentless excerpt
+      </a>
+      ·
+      <a href="${sources.nasa.url}" target="_blank" rel="noopener">
+        NASA
+      </a>
+    </p>
+  `);
+}
+
+// Controls.
+$("#setupBtn").onclick = setup;
+$("#closePanel").onclick = closePanel;
+$("#closeClue").onclick = closeClue;
+$("#revealBtn").onclick = reveal;
+$("#answeredBtn").onclick = answered;
+$("#doneBtn").onclick = finishClue;
+$("#skipBtn").onclick = skipClue;
+$("#clueUndoBtn").onclick = undo;
+
+$("#clueDialog").addEventListener("cancel", event => {
+  event.preventDefault();
+  closeClue();
+});
+
+$("#fullscreenBtn").onclick = async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      notify("Use your browser’s full-screen control.");
+    }
+  } catch {
+    notify("Use your browser’s full-screen control.");
+  }
+};
+
+document.addEventListener("keydown", event => {
+  if (
+    event.key.toLowerCase() === "r" &&
+    active() &&
+    !["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)
+  ) {
+    event.preventDefault();
+    reveal();
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (active()?.mode === "double") tick();
+});
+
+window.addEventListener("focus", () => {
+  if (active()?.mode === "double") tick();
+});
+
+// Start the game.
+renderBoard();
+if (active()) renderDialog();
+save();
+
+// Optional browser integration; the game works without this API.
+if (document.modelContext?.registerTool) {
+  const lifecycle = new AbortController();
+
+  const register = tool => {
+    try {
+      Promise.resolve(
+        document.modelContext.registerTool(
+          tool,
+          { signal: lifecycle.signal }
+        )
+      ).catch(() => {});
+    } catch {}
+  };
+
+  register({
+    name: "read_starpath_game",
+    title: "Read game",
+    description: "Read team scores and the board without revealing answers or hidden Daily Double locations.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: true },
+    execute: () => ({
+      teams: state.teams,
+      played: state.played,
+      finalDone: state.finalDone,
+      categories: categories.map(category => category.name)
+    })
+  });
+
+  register({
+    name: "open_starpath_clue",
+    title: "Open a clue",
+    description: "Open an unplayed clue or its Daily Double bidding screen, without revealing answers or changing scores.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        clueId: {
+          type: "string",
+          enum: clues.map(clue => clue.id)
+        }
+      },
+      required: ["clueId"],
+      additionalProperties: false
+    },
+    execute: input => {
+      if (
+        !input ||
+        typeof input.clueId !== "string" ||
+        active() ||
+        $("#panelDialog").open ||
+        !openClue(input.clueId)
+      ) {
+        throw new Error("Choose an available clue.");
+      }
+
+      return {
+        id: state.activeId,
+        stage: active().stage,
+        ...(active().stage === "question"
+          ? {
+              text: question().text,
+              value: question().value
+            }
+          : {})
+      };
+    }
+  });
+
+  window.addEventListener(
+    "pagehide",
+    () => lifecycle.abort(),
+    { once: true }
+  );
+}
+</script>
 </body>
 </html>
