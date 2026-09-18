@@ -1,727 +1,2240 @@
-<style>
-:root{
-  --bg:#050607; --panel:#0e1113; --panel2:#14181b; --line:#23282c;
-  --blue:#4db8f0; --blue-dim:#1c3f52; --white:#f4f6f7; --dim:#9aa4aa;
-  --green:#3fbf7f; --red:#e0553f; --orange:#f0a94d; --yellow:#f5d90a;
-  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
-  --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Helvetica,Arial,sans-serif;
-}
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-#sp-root{
-  background:var(--bg); color:var(--white); font-family:var(--sans);
-  min-height:100vh; width:100%; display:flex; flex-direction:column; align-items:stretch;
-  position:relative; overflow-x:hidden;
-}
-#sp-root:before{
-  content:""; position:fixed; inset:0; pointer-events:none; opacity:.5;
-  background-image:radial-gradient(1px 1px at 20% 30%, #ffffff55 1px, transparent 1px),
-                    radial-gradient(1px 1px at 70% 60%, #ffffff33 1px, transparent 1px),
-                    radial-gradient(1.5px 1.5px at 40% 80%, #ffffff44 1px, transparent 1px),
-                    radial-gradient(1px 1px at 85% 15%, #ffffff33 1px, transparent 1px),
-                    radial-gradient(1px 1px at 55% 45%, #ffffff22 1px, transparent 1px);
-  background-size:100% 100%;
-  z-index:0;
-}
-.sp-wrap{ position:relative; z-index:1; max-width:900px; margin:0 auto; width:100%; padding:24px 20px 64px; }
-.sp-wrap.has-timer{ padding-top:64px; }
-.sp-logo{ display:flex; align-items:center; gap:10px; justify-content:center; margin:28px 0 6px; }
-.sp-logo svg{ width:26px; height:26px; }
-.sp-logo span{ font-family:var(--mono); letter-spacing:.28em; font-size:15px; color:var(--white); font-weight:600; }
-.sp-title{ text-align:center; font-size:clamp(28px,5vw,44px); font-weight:800; margin:6px 0 4px; letter-spacing:-0.02em; }
-.sp-title .accent{ color:var(--blue); }
-.sp-sub{ text-align:center; color:var(--dim); font-size:15px; margin-bottom:36px; line-height:1.5; }
-.sp-card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:28px; margin-bottom:18px; }
-.sp-btn-row{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
-.sp-btn{
-  appearance:none; border:1px solid var(--line); background:var(--panel2); color:var(--white);
-  font-family:var(--sans); font-size:16px; font-weight:600; padding:16px 26px; border-radius:10px;
-  cursor:pointer; transition:all .15s ease; display:flex; align-items:center; gap:10px; justify-content:center;
-}
-.sp-btn:hover{ border-color:var(--blue); background:#111a20; transform:translateY(-1px); }
-.sp-btn.primary{ background:var(--blue); color:#04141c; border-color:var(--blue); }
-.sp-btn.primary:hover{ background:#66c6f4; }
-.sp-btn.wide{ width:100%; }
-.sp-btn.big{ font-size:20px; padding:22px 34px; }
-.sp-btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
-.sp-btn.yellow{ background:var(--yellow); color:#241d00; border-color:var(--yellow); }
-.sp-btn.yellow:hover{ background:#ffe75c; }
-.sp-team-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.sp-team-btn{
-  appearance:none; border:2px solid var(--line); background:var(--panel2); color:var(--white);
-  font-family:var(--sans); font-size:22px; font-weight:800; padding:32px 10px; border-radius:12px;
-  cursor:pointer; transition:all .15s ease;
-}
-.sp-team-btn:hover{ border-color:var(--blue); background:#111a20; transform:translateY(-2px); }
-.sp-team-btn.selected{ border-color:var(--blue); background:var(--blue-dim); color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue); }
-.sp-input{
-  width:100%; background:#0a0d0f; border:1px solid var(--line); color:var(--white);
-  font-family:var(--sans); font-size:16px; padding:14px 16px; border-radius:8px; outline:none;
-}
-.sp-input:focus{ border-color:var(--blue); }
-.sp-field{ margin-bottom:16px; }
-.sp-field label{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--dim); margin-bottom:8px; text-transform:uppercase; }
-.sp-chip{
-  display:inline-block; font-family:var(--mono); font-size:11px; letter-spacing:.14em; font-weight:700;
-  padding:5px 11px; border-radius:100px; border:1px solid currentColor; text-transform:uppercase; margin-bottom:16px;
-}
-.sp-progress-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:16px; }
-.sp-progress-track{ flex:1; height:6px; background:var(--line); border-radius:100px; overflow:hidden; }
-.sp-progress-fill{ height:100%; background:var(--blue); transition:width .3s ease; }
-.sp-score-badge{ font-family:var(--mono); font-size:13px; color:var(--dim); white-space:nowrap; }
-.sp-question-img{ width:100%; border-radius:10px; display:block; margin-bottom:18px; border:1px solid var(--line); }
-.sp-prompt{ font-size:19px; font-weight:600; margin-bottom:18px; line-height:1.4; }
-.sp-hint{ font-family:var(--mono); font-size:13px; color:var(--orange); background:#2a220c; border:1px solid #5c4c1c; border-radius:8px; padding:10px 14px; margin:-8px 0 18px; }
-.sp-quote{ font-size:19px; line-height:2.1; font-style:italic; color:#e8ebec; margin-bottom:8px; }
-.sp-blank-input{
-  display:inline-block; background:var(--blue); border:none; border-bottom:2px solid var(--blue);
-  color:#04141c; font-style:normal; font-weight:700; font-family:var(--sans); font-size:17px;
-  padding:6px 10px; border-radius:5px; text-align:center; vertical-align:middle; outline:none;
-  margin:3px 5px; min-width:2.6em;
-}
-.sp-blank-input::placeholder{ color:#04141c99; }
-.sp-blank-input.graded-correct{ background:var(--green); color:#04170d; }
-.sp-blank-input.graded-wrong{ background:var(--red); color:#210603; text-decoration:line-through; }
-.sp-reveal{ font-family:var(--mono); font-size:13px; color:var(--green); margin-top:4px; }
-.sp-reveal.wrong{ color:var(--red); }
-.sp-blank-block{ margin-bottom:14px; }
-.sp-blank-block label{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--dim); margin-bottom:6px; text-transform:uppercase; }
-.sp-feedback-banner{ border-radius:10px; padding:14px 16px; margin:18px 0; font-weight:700; font-size:15px; display:flex; align-items:center; gap:10px; }
-.sp-feedback-banner.all-correct{ background:#0c2a1c; color:var(--green); border:1px solid #1c5c3c; }
-.sp-feedback-banner.partial{ background:#2a220c; color:var(--orange); border:1px solid #5c4c1c; }
-.sp-feedback-banner.all-wrong{ background:#2a0f0c; color:var(--red); border:1px solid #5c261c; }
-.sp-summary-score{ text-align:center; font-size:56px; font-weight:800; color:var(--blue); margin:10px 0 2px; }
-.sp-summary-total{ text-align:center; color:var(--dim); font-family:var(--mono); margin-bottom:8px; }
-.sp-summary-time{ text-align:center; color:var(--white); font-family:var(--mono); font-size:15px; margin-bottom:18px; }
-.sp-summary-time b{ color:var(--blue); }
-.sp-review-row{ display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
-.sp-review-row:last-child{ border-bottom:none; }
-.sp-review-icon{ font-size:16px; flex-shrink:0; width:20px; text-align:center; }
-.sp-review-body{ flex:1; font-size:14px; line-height:1.5; color:var(--dim); }
-.sp-review-body b{ color:var(--white); }
-.sp-topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.sp-back{ background:none; border:none; color:var(--dim); font-family:var(--mono); font-size:12px; cursor:pointer; letter-spacing:.08em; }
-.sp-back:hover{ color:var(--white); }
-.sp-lit{ display:inline-block; padding:0 4px; font-style:italic; color:#c7ccce; }
-.sp-submit-bar{ position:sticky; bottom:14px; text-align:center; border-color:var(--yellow); box-shadow:0 8px 30px #000000cc; }
-.sp-qgroup{ scroll-margin-top:70px; }
-.sp-mc-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.sp-mc-option{
-  appearance:none; text-align:left; border:1px solid var(--line); background:#0a0d0f; color:var(--white);
-  font-family:var(--sans); font-size:15px; font-weight:600; padding:14px 16px; border-radius:8px;
-  cursor:pointer; transition:all .12s ease;
-}
-.sp-mc-option:hover{ border-color:var(--blue); }
-.sp-mc-option.selected{ border-color:var(--blue); background:var(--blue-dim); box-shadow:inset 0 0 0 1px var(--blue); }
-.sp-mc-option.reveal-correct{ border-color:var(--green); background:#0c2a1c; color:var(--green); font-weight:800; }
-.sp-mc-option.reveal-wrong-pick{ border-color:var(--red); background:#2a0f0c; color:var(--red); text-decoration:line-through; }
-.sp-mc-option:disabled{ cursor:default; }
-.sp-bank-wrap{ display:flex; flex-wrap:wrap; gap:9px; margin-top:6px; }
-.sp-bank-chip{
-  appearance:none; border:1px solid var(--line); background:#0a0d0f; color:var(--white);
-  font-family:var(--sans); font-size:14px; font-weight:600; padding:10px 16px; border-radius:100px;
-  cursor:pointer; transition:all .12s ease;
-}
-.sp-bank-chip:hover{ border-color:var(--blue); }
-.sp-bank-chip.selected{ border-color:var(--blue); background:var(--blue-dim); }
-.sp-bank-chip.bank-correct-selected{ border-color:var(--green); background:#0c2a1c; color:var(--green); font-weight:800; }
-.sp-bank-chip.bank-correct-missed{ border-color:var(--orange); color:var(--orange); background:#2a220c; }
-.sp-bank-chip.bank-wrong-selected{ border-color:var(--red); background:#2a0f0c; color:var(--red); text-decoration:line-through; }
-.sp-bank-chip:disabled{ cursor:default; }
-.sp-timer-bar{
-  position:fixed; top:0; left:0; right:0; z-index:100; background:#0a0d0fee; backdrop-filter:blur(4px);
-  border-bottom:1px solid var(--line); padding:10px 16px; display:flex; align-items:center; justify-content:center;
-  gap:10px; font-family:var(--mono); font-size:15px; letter-spacing:.06em; color:var(--white);
-}
-.sp-timer-bar .tval{ color:var(--blue); font-weight:800; font-size:17px; }
-.sp-timer-bar .tteam{ color:var(--dim); }
-.sp-shot-banner{
-  background:linear-gradient(135deg,#123044,#0a1a26); border:2px dashed var(--blue); border-radius:12px;
-  padding:16px 18px; text-align:center; font-weight:800; font-size:17px; color:var(--blue); margin-bottom:18px;
-}
-.sp-results-card{ background:var(--panel); border:2px solid var(--blue); border-radius:16px; padding:26px; margin-bottom:18px; }
-@media (max-width:560px){
-  .sp-quote{ font-size:17px; }
-  .sp-summary-score{ font-size:44px; }
-  .sp-mc-grid{ grid-template-columns:1fr; }
-  .sp-team-btn{ padding:24px 10px; font-size:19px; }
-}
-</style>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Starpath Jeopardy</title>
 
-<div id="sp-root">
-  <div id="sp-timer-bar" class="sp-timer-bar" style="display:none;">
-    <span>⏱</span><span class="tval" id="sp-timer-value">00:00</span><span class="tteam" id="sp-timer-team"></span>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050515;
+      --blue: #061cb0;
+      --gold: #f6c85b;
+      --white: #fffaf0;
+      --muted: #c1c4e4;
+      --black: #02020c;
+
+      /* Exact fonts are used when installed on the viewing computer. */
+      --clue-font: "ITC Korinna", "ITC Korinna Std", "Korinna Std",
+        "Korinna BT", Georgia, "Times New Roman", serif;
+      --board-font: "Swiss 921 BT", "Swiss 911 BT", "Swiss 921",
+        "Swiss 911", Impact, "Arial Narrow", sans-serif;
+
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--white); background: var(--bg); }
+    button, input, select { font: inherit; }
+
+    button {
+      cursor: pointer;
+      background: #0c177d;
+      border: 1px solid #7473b4;
+      color: var(--white);
+      padding: 11px 18px;
+      font-weight: 700;
+      border-radius: 2px;
+    }
+
+    button:hover:not(:disabled) { background: #253ece; }
+    button:disabled { opacity: .4; cursor: default; }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 4px;
+    }
+
+    input, select {
+      background: #050e58;
+      color: var(--white);
+      border: 1px solid #a5a0ce;
+      padding: 10px;
+      min-width: 0;
+      border-radius: 0;
+    }
+
+    a { color: var(--gold); }
+
+    .game {
+      max-width: 1680px;
+      margin: auto;
+      padding: 22px 34px 20px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 6px 16px;
+      border-bottom: 3px double #c8b584;
+    }
+
+    .brand h1 {
+      font-family: Impact, "Arial Narrow", Arial, sans-serif;
+      font-size: 3.05rem;
+      line-height: 1;
+      letter-spacing: .025em;
+      font-weight: 900;
+      margin: 0;
+      text-shadow: 3px 3px 0 #373d98, 5px 5px 0 #000;
+    }
+
+    .brand small {
+      display: block;
+      font-family: Arial, sans-serif;
+      font-size: .75rem;
+      letter-spacing: .38em;
+      color: var(--gold);
+      margin-bottom: 6px;
+      text-shadow: none;
+    }
+
+    nav { display: flex; gap: 5px; align-items: center; }
+
+    .quiet {
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      font-size: .875rem;
+    }
+
+    .icon-button {
+      background: transparent;
+      border-color: transparent;
+      font-size: 1.8rem;
+      padding: 0 9px;
+    }
+
+    .primary {
+      background: var(--gold);
+      color: #0b114c;
+      border-color: #ffe2a2;
+      box-shadow: 2px 2px 0 #826423;
+    }
+
+    .primary:hover:not(:disabled) { background: #ffdf8d; }
+
+    .round-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 16px 4px 12px;
+      font-size: .8rem;
+      letter-spacing: .13em;
+      color: var(--muted);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      background: var(--black);
+      padding: 7px;
+      border: 3px double #a49a73;
+      box-shadow: 0 0 0 4px #101025, 0 7px 0 #010109;
+    }
+
+    .category {
+      display: grid;
+      grid-template-rows:
+        69px repeat(5, minmax(53px, calc((100dvh - 460px) / 5)));
+      gap: 6px;
+    }
+
+    .category h2 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-width: 0;
+      padding: 9px;
+      margin: 0;
+      background: var(--blue);
+      color: var(--white);
+      font-family: var(--board-font);
+      font-stretch: condensed;
+      font-size: clamp(1rem, 1.6vw, 1.45rem);
+      font-weight: 400;
+      line-height: 1.1;
+      text-transform: uppercase;
+      text-shadow: 2px 2px #020332;
+      border-bottom: 2px solid #03072e;
+    }
+
+    .tile {
+      background: linear-gradient(180deg, #091fb0, #071897);
+      color: var(--gold);
+      border: 0;
+      box-shadow: inset 0 0 0 1px #243abe;
+      font-family: var(--board-font);
+      font-size: clamp(1.8rem, 3.1vw, 3.2rem);
+      line-height: 1;
+      font-weight: 400;
+      text-shadow: 3px 3px 0 #000;
+      padding: 8px;
+      border-radius: 0;
+    }
+
+    .tile:hover:not(:disabled) { background: #1a33d0; }
+
+    .tile.used:disabled {
+      opacity: 1;
+      background: #061584;
+      box-shadow: inset 0 0 0 1px #11259d;
+    }
+
+    .scores {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .score-card {
+      text-align: center;
+      min-width: 0;
+      border: 3px double #aea082;
+      background: #07145f;
+      box-shadow: 3px 4px 0 #000;
+      padding: 9px 14px;
+    }
+
+    .score-name {
+      display: block;
+      color: var(--gold);
+      font-size: .88rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      overflow-wrap: anywhere;
+    }
+
+    .score-value {
+      display: block;
+      font-family: var(--board-font);
+      font-weight: 400;
+      font-size: 1.85rem;
+      line-height: 1.2;
+      margin-top: 5px;
+      text-shadow: 2px 2px #000;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .negative { color: #ffaca0; }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 17px;
+    }
+
+    footer > div { display: flex; gap: 8px; }
+
+    .notice {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      background: var(--gold);
+      color: #07104c;
+      border: 2px solid #fff1bc;
+      z-index: 20;
+      max-width: 90vw;
+      box-shadow: 4px 4px #0008;
+      font-weight: 600;
+    }
+
+    .notice:empty { display: none; }
+
+    dialog {
+      background: var(--blue);
+      color: var(--white);
+      border: 4px double #c4b48c;
+      box-shadow: 0 0 0 7px #03031b, 8px 12px 40px #000b;
+      border-radius: 0;
+      padding: 0;
+      max-height: 94dvh;
+      overflow: auto;
+    }
+
+    dialog::backdrop { background: #020214e8; }
+    .clue-dialog { width: min(1160px, 94vw); }
+
+    .clue-top,
+    .clue-controls,
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid #7a7aba;
+    }
+
+    .eyebrow {
+      font-size: .875rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--gold);
+      line-height: 1.35;
+    }
+
+    .clue-top .quiet { color: #ebe7fa; }
+
+    .clue-body {
+      padding: 24px 44px 23px;
+      text-align: center;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .clue-text {
+      font-family: var(--clue-font);
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.32;
+      text-transform: uppercase;
+      text-shadow: 2px 3px #020340;
+      margin: 14px 0 22px;
+      text-wrap: balance;
+    }
+
+    .clue-text.special-title {
+      font-family: Impact, "Arial Narrow", Arial, sans-serif;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      letter-spacing: .025em;
+      color: var(--gold);
+      text-shadow: 3px 4px #000;
+      line-height: 1.1;
+    }
+
+    .answer-text {
+      font-family: var(--clue-font);
+      font-size: clamp(1.3rem, 2.4vw, 2rem);
+      color: var(--gold);
+      margin: 14px 0;
+      line-height: 1.35;
+    }
+
+    #answerPanel {
+      border-top: 1px solid #686bbc;
+      padding-top: 8px;
+    }
+
+    details {
+      font-size: .875rem;
+      line-height: 1.55;
+      color: var(--muted);
+    }
+
+    summary {
+      cursor: pointer;
+      display: list-item;
+      list-style-position: inside;
+    }
+
+    .award-row {
+      display: flex;
+      gap: 11px;
+      flex-wrap: wrap;
+      padding: 0 24px 22px;
+    }
+
+    .award-team {
+      flex: 1;
+      min-width: 155px;
+      border: 2px double #9590b9;
+      background: #061775;
+      padding: 12px;
+    }
+
+    .team-score-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: .9rem;
+    }
+
+    .team-score-heading strong {
+      color: var(--gold);
+      overflow-wrap: anywhere;
+    }
+
+    .team-score-heading span {
+      font-family: var(--board-font);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .money-controls { display: flex; gap: 7px; }
+
+    .money-controls button {
+      font-family: var(--board-font);
+      font-weight: 400;
+      flex: 1;
+      font-size: 1.05rem;
+      padding: 10px 5px;
+      background: #030e5a;
+      border-color: #696cb0;
+    }
+
+    .positive { color: #b9f7c5; }
+    .negative-button { color: #ffc6b8; }
+
+    .clue-controls {
+      border-bottom: 0;
+      border-top: 1px solid #7a7aba;
+      padding: 15px 24px;
+    }
+
+    .reveal-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .countdown {
+      height: 10px;
+      margin: 24px 44px 0;
+      background: #ffffff26;
+      overflow: hidden;
+    }
+
+    .countdown-fill {
+      height: 100%;
+      width: 100%;
+      background: #fff;
+      transform-origin: left center;
+    }
+
+    .panel-dialog {
+      width: min(700px, 94vw);
+      background: #081665;
+    }
+
+    .panel-top h2 { font-size: 1.4rem; margin: 0; }
+    .panel-top .quiet { font-size: 1.3rem; }
+
+    #panelContent {
+      padding: 22px 26px 28px;
+      line-height: 1.55;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .field input[type="text"] { width: calc(100% - 115px); }
+    .field input[type="number"] { width: 100px; }
+
+    .team-field-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .9rem;
+      margin-bottom: 8px;
+    }
+
+    .team-field-labels span:last-child { width: 100px; }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 25px;
+    }
+
+    .danger { color: #ffb8a8; }
+    .small { font-size: .875rem; color: var(--muted); }
+
+    .double-bid {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin: 5px auto 18px;
+    }
+
+    .double-bid label {
+      font-size: .95rem;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      color: var(--gold);
+    }
+
+    .double-bid input { width: 185px; }
+    .double-bid select { max-width: 270px; }
+
+    .bid-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 24px;
+    }
+
+    .bid-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px 12px;
+      text-align: left;
+      background: #081976;
+      border: 1px solid #8b88b1;
+      font-size: .9rem;
+    }
+
+    .bid-card strong { color: var(--gold); }
+    .bid-card span { font-size: .875rem; }
+    .bid-card input { width: 100%; }
+    input[readonly] { opacity: .6; }
+    [hidden] { display: none !important; }
+
+    .pending-wager {
+      display: flex;
+      justify-content: center;
+      margin: 0 0 14px;
+    }
+
+    @media (min-width: 1400px) {
+      .category {
+        grid-template-rows:
+          75px repeat(5, minmax(53px, calc((100dvh - 470px) / 5)));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .game { padding: 18px; }
+      .brand h1 { font-size: 2.5rem; }
+      .board { gap: 5px; padding: 5px; }
+
+      .category {
+        gap: 5px;
+        grid-template-rows: 65px repeat(5, 65px);
+      }
+
+      .category h2 { font-size: 1rem; }
+      .tile { font-size: 2.05rem; }
+      .scores { gap: 10px; }
+      .score-value { font-size: 1.55rem; }
+      .clue-body { padding: 20px 27px; }
+      .award-team { min-width: 41%; }
+
+      .bid-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 550px) {
+      .game { padding: 14px 8px; }
+      .brand h1 { font-size: 2rem; }
+      .brand small { font-size: .7rem; }
+      header { gap: 5px; padding-bottom: 14px; }
+      .quiet { padding: 8px; font-size: .875rem; }
+      .icon-button { font-size: 1.55rem; padding: 3px; }
+      .round-heading { font-size: .75rem; }
+      .board { gap: 3px; padding: 3px; }
+
+      .category {
+        gap: 3px;
+        grid-template-rows: 71px repeat(5, 58px);
+      }
+
+      .category h2 {
+        font-size: .8rem;
+        padding: 5px 2px;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+      }
+
+      .tile {
+        font-size: clamp(1.08rem, 4.7vw, 1.6rem);
+        text-shadow: 1px 2px #000;
+        padding: 2px;
+      }
+
+      .scores {
+        gap: 6px;
+        margin-top: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .score-card { padding: 8px; }
+      .score-name { font-size: .85rem; }
+      .score-value { font-size: 1.45rem; }
+      footer { gap: 7px; }
+      .primary { padding: 10px 12px; font-size: .9rem; }
+      .clue-top, .clue-controls { padding: 12px 15px; }
+      .clue-top .eyebrow { font-size: .75rem; max-width: 70%; }
+      .clue-body { padding: 14px; }
+      .clue-text { font-size: 1.4rem; }
+      .award-row { padding: 0 14px 17px; gap: 8px; }
+      .award-team { padding: 9px; }
+      .team-score-heading { font-size: .85rem; }
+      .money-controls button { font-size: .9rem; }
+      .clue-controls { flex-wrap: wrap; }
+      .reveal-actions { gap: 8px; flex-wrap: wrap; }
+      .reveal-actions button { font-size: .9rem; padding: 10px; }
+      .double-bid { gap: 14px; }
+      .double-bid label { width: 100%; }
+
+      .double-bid input,
+      .double-bid select {
+        width: 100%;
+        max-width: none;
+      }
+
+      .bid-card { padding: 11px; }
+      .countdown { margin: 18px 14px 0; height: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game">
+    <header>
+      <div class="brand">
+        <h1><small>STARPATH</small>JEOPARDY!</h1>
+      </div>
+
+      <nav aria-label="Game controls">
+        <button id="setupBtn" class="quiet">Teams</button>
+        <button
+          id="fullscreenBtn"
+          class="icon-button"
+          aria-label="Toggle full screen"
+          title="Full screen"
+        >⛶</button>
+      </nav>
+    </header>
+
+    <main id="main"></main>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
   </div>
-  <div class="sp-wrap" id="sp-app"></div>
-</div>
-<script type="application/json" id="sp-data">{"questions": [{"id": 1, "cat": "WEBSITE", "type": "image", "img": "p2", "mc": true, "prompt": "Who is this?", "options": ["Saurav Shroff", "Mihir Gondhalekar", "Jason Zang", "Aditya Rao", "Kevin Chen", "Marcus Webb"], "correct": "Saurav Shroff", "maxPoints": 1}, {"id": 2, "cat": "WEBSITE", "type": "image", "img": "p2", "mc": true, "prompt": "What is his role at the company?", "options": ["CEO & Co-Founder", "Chief Technology Officer", "VP of Propulsion Engineering", "Head of Business Development", "Chief Operating Officer", "Director of Manufacturing"], "correct": "CEO & Co-Founder", "maxPoints": 1}, {"id": 3, "cat": "WEBSITE", "type": "image", "img": "p4", "prompt": "What is this product called?", "blanks": [{"label": "Product name", "accept": ["starlight"]}], "maxPoints": 1}, {"id": 4, "cat": "WEBSITE", "type": "image", "img": "q4b", "prompt": "Starpath calls this system STAR_____", "blanks": [{"label": "Missing letters", "accept": ["mine"], "w": 6}], "maxPoints": 1}, {"id": 5, "cat": "WEBSITE", "type": "image", "img": "p6", "prompt": "Finish the headline: “_____ and _____ are key to enabling a multi-planet species.”", "hint": "Both words start with the letter “P.”", "blanks": [{"label": "Missing words", "accept": ["power and propellant", "power & propellant"], "tokens": [{"box": "Power"}, {"lit": "and"}, {"box": "Propellant"}]}], "maxPoints": 1}, {"id": 6, "cat": "TECHCRUNCH", "type": "text", "template": "Starpath Robotics has emerged from stealth with an ambitious plan to design, launch and operate machines to mine and refine %%BLANK%% for rocket propellant using resources on the moon and Mars.", "blanks": [{"accept": ["water"], "w": 8}], "maxPoints": 1}, {"id": 7, "cat": "TECHCRUNCH", "type": "text", "template": "A fleet of around %%BLANK%% mining machines will drive around the surface of the moon and dig up massive quantities of dirt; they will bring that dirt to a processing plant or refinery that purifies the dirt into water and then splits those water molecules into their constituent atoms.", "blanks": [{"accept": ["50", "fifty"], "w": 4, "numeric": true}], "maxPoints": 1}, {"id": 8, "cat": "TECHCRUNCH", "type": "text", "template": "The company is admittedly hinging its plans on a commercial lunar %%BLANK%% coming online before 2028. But the two reasons they are dependent on %%BLANK%% are fairly obvious: First, they need %%BLANK%%’s payload capacity to deliver all the machinery to the moon. As for the second reason, “%%BLANK%% and %%BLANK%%’s customers are our customers,” Shroff said.", "repeat_single": true, "blanks": [{"accept": ["starship"], "w": 10, "points": 5, "label": "One word fills every blank above — what is it?"}], "maxPoints": 5}, {"id": 9, "cat": "TECHCRUNCH", "type": "text", "template": "Starpath was founded by Shroff, Mihir Gondhalekar and Jason Zang in mid-2022. The trio of founders are relatively green: Saurav spent just %%BLANK%% months at SpaceX as an avionics engineer after finishing his bachelors degree in engineering from UC Berkeley, while Gondhalekar worked as an associate structures engineer at SpaceX for %%BLANK%% months. Shroff said he felt the idea behind Starpath was more than possible and that they needed to start now.", "blanks": [{"accept": ["four", "4"], "w": 4, "numeric": true}, {"accept": ["three", "3"], "w": 4, "numeric": true}], "maxPoints": 2}, {"id": 10, "cat": "TECHCRUNCH", "type": "text", "template": "Shroff estimated that Starpath will require around $%%BLANK%% million over the next few years, to get from clean sheet to operating on the surface of the moon.", "blanks": [{"accept": ["50", "fifty"], "w": 4, "numeric": true}], "maxPoints": 1}, {"id": 11, "cat": "PITCH DECK", "type": "image", "img": "p13", "wordbank": true, "prompt": "Select the 4 words/phrases that complete this table", "bank": ["Research", "Tourism", "Communications", "Defense", "Mining", "Colonization", "Construction", "In-Space Satellite Refueling", "Agriculture", "Manufacturing", "Logistics", "Exploration"], "correctSet": ["Tourism", "Mining", "Manufacturing", "In-Space Satellite Refueling"], "maxPoints": 4}, {"id": 12, "cat": "PITCH DECK", "type": "image", "img": "p14", "prompt": "Propellant is Mostly _______ which is commonly known as LOX", "blanks": [{"label": "Missing words", "accept": ["liquid oxygen", "lox"], "tokens": [{"box": "Liquid"}, {"box": "Oxygen"}]}], "maxPoints": 1}, {"id": 13, "cat": "PAYLOAD", "type": "text", "template": "A start-up developing the infrastructure for lunar resource extraction—including a power plant, a fleet of rovers, and a processing plant—raised $%%BLANK%% in seed funding from a group of venture investors led by 8VC and Fusion Fund, alongside Day One Ventures, Balerion Space, and Indicator Ventures.", "blanks": [{"accept": ["12m", "12", "12 million", "$12m", "$12"], "w": 5}], "maxPoints": 1}, {"id": 14, "cat": "PAYLOAD", "type": "text", "template": "An autonomous thermal processing plant to melt ice, split water into %%BLANK%% and %%BLANK%%, and liquefy the oxygen.", "blanks": [{"accept": ["hydrogen"], "w": 9}, {"accept": ["oxygen"], "w": 7}], "maxPoints": 2}, {"id": 15, "cat": "PAYLOAD", "type": "text", "template": "The business plan is simple: Sell large quantities of %%BLANK%% propellant to companies like SpaceX and Blue Origin that are already building reusable vehicles to visit the Moon.", "blanks": [{"accept": ["lox", "liquid oxygen"], "w": 5}], "maxPoints": 1}, {"id": 16, "cat": "NASA BREAK THE ICE", "type": "text", "template": "Starpath built a four-wheeled rover capable of excavating, collecting, and hauling material under extremely harsh environmental conditions that simulate the lunar %%BLANK%% Pole.", "blanks": [{"accept": ["south"], "w": 8}], "maxPoints": 1}, {"id": 17, "cat": "NASA BREAK THE ICE", "type": "text", "template": "%%BLANK%% won first place overall and the $1 million grand prize in the final phase of NASA’s Break the Ice Lunar Challenge in June 2024.", "blanks": [{"accept": ["terra engineering", "terra"], "w": 16}], "maxPoints": 1}, {"id": 18, "cat": "BONUS", "type": "image", "prompt": "What city within the Los Angeles area is Starpath headquartered in?", "blanks": [{"label": "City", "accept": ["hawthorne"], "w": 10}], "maxPoints": 1}], "maxScore": 27}</script>
-<script type="application/json" id="sp-images">/* PLACEHOLDER — the real file has 7 base64-encoded JPEGs here (keys: p2, p4, p5, p6, p13, p14, q4b), ~200KB of image data. Use the downloaded file above for the working copy, or re-attach it here if you need this blob reproduced verbatim. */</script>
-<script>
-(function(){
-  const DATA = JSON.parse(document.getElementById('sp-data').textContent);
-  const IMAGES = JSON.parse(document.getElementById('sp-images').textContent);
-  const QUESTIONS = DATA.questions;
-  const MAX_SCORE = DATA.maxScore;
-  const CAT_COLORS = {"WEBSITE": "#4db8f0", "TECHCRUNCH": "#9aa0a6", "PITCH DECK": "#4db8f0", "PAYLOAD": "#f0a94d", "NASA BREAK THE ICE": "#e0553f", "BONUS": "#3fbf7f"};
-  const LOGO = "<svg viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M12 1 L12 23 M3 6 L21 18 M21 6 L3 18\" stroke=\"#4db8f0\" stroke-width=\"1.4\"/>\n<circle cx=\"12\" cy=\"12\" r=\"2.2\" fill=\"#4db8f0\"/>\n</svg>";
-  const TEAMS = ['TEAM SSS','TEAM XSS','TEAM MNR','TEAM JKL'];
 
-  let state = { screen: 'landing' };
+  <dialog
+    id="clueDialog"
+    class="clue-dialog"
+    aria-labelledby="clueLabel"
+  >
+    <div class="clue-top">
+      <span id="clueLabel" class="eyebrow"></span>
+      <button id="closeClue" class="quiet">
+        Board <span aria-hidden="true">×</span>
+      </button>
+    </div>
 
-  // ---------------- timer ----------------
-  let timerHandle = null;
-  let timerStartMs = null;
-  let elapsedFrozenSec = null;
+    <div
+      id="countdown"
+      class="countdown"
+      role="progressbar"
+      aria-label="Answer time remaining"
+      aria-valuemin="0"
+      aria-valuemax="8"
+      aria-valuenow="8"
+      hidden
+    >
+      <div id="countdownFill" class="countdown-fill"></div>
+    </div>
 
-  function formatTime(sec){
-    const m = Math.floor(sec/60), s = sec%60;
-    return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
-  }
-  function tickTimer(){
-    const el = document.getElementById('sp-timer-value');
-    if(!el || timerStartMs == null) return;
-    const sec = Math.floor((Date.now()-timerStartMs)/1000);
-    el.textContent = formatTime(sec);
-  }
-  function startTimer(teamName){
-    timerStartMs = Date.now();
-    elapsedFrozenSec = null;
-    const bar = document.getElementById('sp-timer-bar');
-    const teamEl = document.getElementById('sp-timer-team');
-    if(bar) bar.style.display = 'flex';
-    if(teamEl) teamEl.textContent = teamName ? ('\u2014 ' + teamName) : '';
-    if(timerHandle) clearInterval(timerHandle);
-    timerHandle = setInterval(tickTimer, 500);
-    tickTimer();
-  }
-  function stopTimer(){
-    if(timerStartMs != null){
-      elapsedFrozenSec = Math.floor((Date.now()-timerStartMs)/1000);
-    }
-    if(timerHandle) clearInterval(timerHandle);
-    timerHandle = null;
-    const el = document.getElementById('sp-timer-value');
-    if(el && elapsedFrozenSec != null) el.textContent = formatTime(elapsedFrozenSec);
-  }
-  function hideTimer(){
-    if(timerHandle) clearInterval(timerHandle);
-    timerHandle = null;
-    timerStartMs = null;
-    elapsedFrozenSec = null;
-    const bar = document.getElementById('sp-timer-bar');
-    if(bar) bar.style.display = 'none';
-  }
+    <div class="clue-body">
+      <p id="clueText" class="clue-text"></p>
+      <div id="wagerPanel" hidden></div>
 
-  // ---------------- grading helpers ----------------
-  function normalize(s){
-    return String(s||'').toLowerCase().trim()
-      .replace(/[\$"']/g,'')
-      .replace(/[.,!?]/g,'')
-      .replace(/\s+/g,' ')
-      .trim();
-  }
-  function digits(s){
-    let m = String(s||'').match(/-?\d+(\.\d+)?/);
-    return m ? m[0] : '';
-  }
-  function levenshtein(a,b){
-    const m=a.length, n=b.length;
-    if(!m) return n; if(!n) return m;
-    let prev = Array(n+1).fill(0).map((_,i)=>i);
-    for(let i=1;i<=m;i++){
-      let cur=[i];
-      for(let j=1;j<=n;j++){
-        cur[j] = a[i-1]===b[j-1] ? prev[j-1] : 1+Math.min(prev[j-1],prev[j],cur[j-1]);
-      }
-      prev=cur;
-    }
-    return prev[n];
-  }
-  function isCorrect(input, blank){
-    const norm = normalize(input);
-    if(!norm) return false;
-    const normNoSpace = norm.replace(/\s+/g,'');
-    for(const accepted of blank.accept){
-      const a = normalize(accepted);
-      if(norm === a) return true;
-      if(normNoSpace === a.replace(/\s+/g,'')) return true;
-      if(a.length >= 4){
-        const thresh = a.length >= 8 ? 2 : 1;
-        if(levenshtein(normNoSpace, a.replace(/\s+/g,'')) <= thresh) return true;
-      }
-    }
-    if(blank.numeric){
-      const di = digits(input);
-      for(const accepted of blank.accept){
-        const da = digits(accepted);
-        if(!da) continue;
-        if(di === da) return true;
-        if(di === da.replace('-','')) return true;
-        if('-'+di === da) return true;
-      }
-    }
-    return false;
-  }
-
-  // ---------------- render dispatch ----------------
-  function render(){
-    const app = document.getElementById('sp-app');
-    app.innerHTML = renderScreen();
-    app.classList.toggle('has-timer', document.getElementById('sp-timer-bar').style.display !== 'none');
-    wireEvents();
-    window.scrollTo(0,0);
-  }
-
-  function renderScreen(){
-    if(state.screen === 'landing') return screenLanding();
-    if(state.screen === 'play') return screenPlayAll();
-    if(state.screen === 'reveal') return screenReveal();
-    if(state.screen === 'summary') return screenSummary();
-    return screenLanding();
-  }
-
-  function screenLanding(){
-    const buttons = TEAMS.map((t, i) => `<button type="button" class="sp-team-btn${i===0?' selected':''}" data-action="select-team-inline" data-team="${escapeAttr(t)}">${escapeHtml(t)}</button>`).join('');
-    return `
-      <div class="sp-logo">${LOGO}<span>STARPATH</span></div>
-      <div class="sp-card" style="margin-top:24px;">
-        <div class="sp-field" style="margin-bottom:0;">
-          <label>Select Your Team</label>
-          <div class="sp-team-grid">${buttons}</div>
-        </div>
-        <button class="sp-btn primary big wide" data-action="start-game" style="margin-top:64px;">START</button>
+      <div id="answerPanel" hidden>
+        <p id="answerText" class="answer-text"></p>
+        <details id="sourceDetails">
+          <summary>Notes</summary>
+          <div id="sourceText"></div>
+        </details>
       </div>
-    `;
-  }
+    </div>
 
-  // ---------------- shared blank-input rendering ----------------
-  function blankInputHTML(blank, qi, bi, mode, st){
-    const reveal = mode === 'reveal';
-    const disabled = reveal ? 'disabled' : '';
-    const clsExtra = reveal ? (st.correct ? ' graded-correct' : ' graded-wrong') : '';
-    if(blank.tokens){
-      // All box tokens within one blank share the same width — sized to the
-      // longest box among them — so multi-word answers look even, not staggered.
-      const boxLens = blank.tokens.filter(t => !t.lit).map(t => String(t.box||'').length);
-      const maxLen = Math.max(4, ...boxLens);
-      const w = Math.max(8, (maxLen + 3) * 2);
-      let ti = 0;
-      let out = '';
-      blank.tokens.forEach(tok => {
-        if(tok.lit){
-          out += `<span class="sp-lit">${escapeHtml(tok.lit)}</span>`;
+    <div id="awardRow" class="award-row"></div>
+
+    <div class="clue-controls">
+      <button id="clueUndoBtn" class="quiet">↶ Undo</button>
+
+      <div class="reveal-actions">
+        <button id="skipBtn" class="quiet" hidden>Skip</button>
+        <button id="answeredBtn" hidden>Answered</button>
+        <button id="revealBtn">Show answer</button>
+        <button id="doneBtn" class="primary">Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog
+    id="panelDialog"
+    class="panel-dialog"
+    aria-labelledby="panelTitle"
+  >
+    <div class="panel-top">
+      <h2 id="panelTitle"></h2>
+      <button id="closePanel" class="quiet" aria-label="Close panel">×</button>
+    </div>
+    <div id="panelContent"></div>
+  </dialog>
+
+  <script>
+    "use strict";
+
+    const $ = selector => document.querySelector(selector);
+
+    // SOURCES
+
+    const sources = {
+      official: {
+        label: "Starpath · Starmine",
+        url: "https://www.starpath.space/starmine",
+        evidence: "https://www.starpath.space/starmine",
+        type: "Starpath website"
+      },
+      solar: {
+        label: "Starpath · Starlight",
+        url: "https://www.starpath.space/starlight",
+        evidence: "https://www.starpath.space/starlight",
+        type: "Starpath website"
+      },
+      testing: {
+        label: "Starpath · News",
+        url: "https://www.starpath.space/news",
+        evidence: "https://www.starpath.space/news",
+        type: "Starpath website"
+      },
+      cold: {
+        label: "NASA · Lunar thermal control",
+        url: "https://ntrs.nasa.gov/citations/20120014158",
+        evidence: "https://ntrs.nasa.gov/citations/20120014158",
+        type: "NASA science background"
+      },
+      lunar: {
+        label: "Lunar Ice Mining For Multiplanetary Travel | Starpath",
+        url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
+        evidence: "https://www.sourcery.vc/p/aramco-of-the-moon-starpath",
+        type: "Published episode notes"
+      },
+      mars: {
+        label: "Relentless · Building a self-sustaining city on Mars",
+        url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
+        evidence: "https://www.linkedin.com/posts/ti-morse_sat-down-with-saurav-shroff-co-founder-activity-7386502260991782913-5Y9Y",
+        type: "Host’s episode description and published excerpt"
+      },
+      chapters: {
+        label: "Relentless · Testing and iteration chapters",
+        url: "https://www.youtube.com/watch?v=LImT2qvOFiE",
+        evidence: "https://www.linkedin.com/posts/stephaniesoquet_how-to-build-a-self-sustaining-city-on-mars-activity-7388648758810615809-_FJd",
+        type: "Published chapter list; application clue"
+      },
+      nasa: {
+        label: "NASA · Producing propellant from lunar water",
+        url: "https://ntrs.nasa.gov/citations/20230010039",
+        evidence: "https://ntrs.nasa.gov/citations/20230010039",
+        type: "Science background for the lunar-ice discussion"
+      },
+      glossary: {
+        label: "NASA · Lunar soil and water",
+        url: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
+        evidence: "https://www.nasa.gov/missions/nasa-scientists-show-how-ingredients-for-water-could-be-made-on-surface-of-moon-a-chemical-factory/",
+        type: "Science background"
+      },
+      vision: {
+        label: "Sourcery · Founder’s long-term vision",
+        url: "https://www.youtube.com/watch?v=5aCJdWwF9Eg",
+        evidence: "https://www.linkedin.com/posts/mollysoshea_new-pod-aramco-of-the-moon-starpath-activity-7258126559562084352-AEBi",
+        type: "Publisher’s interview excerpt"
+      }
+    };
+
+    // QUESTIONS
+    // Each row: [clue, answer, host note, source key].
+    // Rows are worth $200, $400, $600, $800, and $1000.
+
+    const categories = [
+      {
+        name: "The Big Mission",
+        clues: [
+          [
+            "This red planet is the destination for Starpath’s long-term city-building vision.",
+            "What is Mars?",
+            "",
+            "mars"
+          ],
+          [
+            "This CEO and cofounder once worked, briefly, at SpaceX.",
+            "Who is Saurav Shroff?",
+            "Accept Saurav or Shroff.",
+            "mars"
+          ],
+          [
+            "This word means living on more than one planet.",
+            "What is multiplanetary?",
+            "Accept “multi-planet” or an equivalent explanation.",
+            "mars"
+          ],
+          [
+            "A city that can keep going without essential supplies from Earth is described this way.",
+            "What is self-sustaining?",
+            "Accept self-sufficient or able to support itself.",
+            "mars"
+          ],
+          [
+            "A second home for humanity could help protect civilization if this happens on Earth.",
+            "What is a major catastrophe?",
+            "Accept a disaster that threatens humanity. This is a motivation, not a guarantee of safety.",
+            "vision"
+          ]
+        ]
+      },
+      {
+        name: "Ice to Liftoff",
+        clues: [
+          [
+            "This frozen resource is the starting material in the lunar-mining discussion.",
+            "What is water ice?",
+            "Ice or frozen water is enough.",
+            "lunar"
+          ],
+          [
+            "LOX is short for this rocket-propellant ingredient.",
+            "What is liquid oxygen?",
+            "",
+            "lunar"
+          ],
+          [
+            "Starpath targets icy regolith near this lunar pole.",
+            "What is the South Pole?",
+            "",
+            "official"
+          ],
+          [
+            "Water is H₂O. Splitting it releases these two elements.",
+            "What are hydrogen and oxygen?",
+            "Both are needed. No chemical equation required.",
+            "nasa"
+          ],
+          [
+            "This word describes the loose dust and broken rock covering the Moon.",
+            "What is regolith?",
+            "Accept lunar soil or Moon dust.",
+            "glossary"
+          ]
+        ]
+      },
+      {
+        name: "Meet the Machines",
+        clues: [
+          [
+            "This robotic vehicle moves around the surface and gathers material.",
+            "What is a rover?",
+            "Accept mining robot.",
+            "lunar"
+          ],
+          [
+            "Starpath’s space-ready solar panel line goes by this bright name.",
+            "What is Starlight?",
+            "",
+            "solar"
+          ],
+          [
+            "This processing facility turns mined material into useful products.",
+            "What is a refinery?",
+            "Accept processing plant.",
+            "lunar"
+          ],
+          [
+            "In the later interview, Starpath sells solar panels to companies that build these orbiting machines.",
+            "What are satellites?",
+            "",
+            "mars"
+          ],
+          [
+            "A rover digs and a refinery processes. The third core system supplies this.",
+            "What is electrical power?",
+            "Accept electricity or energy.",
+            "lunar"
+          ]
+        ]
+      },
+      {
+        name: "Build, Test, Repeat",
+        clues: [
+          [
+            "Starpath tested its rover in a thermal-vacuum chamber run by this U.S. space agency.",
+            "What is NASA?",
+            "",
+            "testing"
+          ],
+          [
+            "An early model built to try out a design is called this.",
+            "What is a prototype?",
+            "Accept test model. Application of the prototyping topic.",
+            "lunar"
+          ],
+          [
+            "Starpath is developing this lunar rover to search permanently shadowed craters for water ice.",
+            "What is Shadow Voyager?",
+            "",
+            "testing"
+          ],
+          [
+            "Build, test, improve, repeat: this cycle helps engineers make a design better.",
+            "What is iteration?",
+            "Accept improving through repeated tests.",
+            "chapters"
+          ],
+          [
+            "This laser-based sensing technology helps Shadow Voyager map terrain and avoid hazards.",
+            "What is LiDAR?",
+            "Accept laser scanning or light detection and ranging.",
+            "testing"
+          ]
+        ]
+      },
+      {
+        name: "Make the Connection",
+        clues: [
+          [
+            "This company builds Starship, a rocket discussed in the interviews.",
+            "What is SpaceX?",
+            "",
+            "lunar"
+          ],
+          [
+            "Like a car on a long trip, a rocket may need to do this before returning home.",
+            "What is refuel?",
+            "",
+            "mars"
+          ],
+          [
+            "A place where vehicles stop to refuel is a useful Earth analogy for Starpath’s mission.",
+            "What is a gas station?",
+            "Accept fuel station or service station. This is a classroom analogy.",
+            "mars"
+          ],
+          [
+            "Lunar night requires this to keep batteries functioning.",
+            "What is heat?",
+            "Accept heating, heaters, or keeping the batteries warm.",
+            "cold"
+          ],
+          [
+            "Starpath uses this name for fuel-production rate relative to the mass of the equipment producing it.",
+            "What is the Starpath Ratio?",
+            "Clue and definition supplied by the host; also named in the Sourcery episode’s chapter list.",
+            "lunar"
+          ]
+        ]
+      }
+    ];
+
+    const clues = categories.flatMap((category, categoryIndex) =>
+      category.clues.map((clue, rowIndex) => ({
+        id: `${categoryIndex}-${rowIndex}`,
+        category: category.name,
+        value: (rowIndex + 1) * 200,
+        text: clue[0],
+        answer: clue[1],
+        note: clue[2],
+        source: clue[3]
+      }))
+    );
+
+    const finalClue = {
+      category: "Live off the land",
+      text: "How can ice on the Moon or Mars become useful to a rocket? Name the two main steps.",
+      answer: "Mine the ice, then process it into propellant ingredients.",
+      note: "Give credit for both ideas: ① mine or collect local water/ice; ② turn it into useful propellant, such as oxygen. “Mine ice and make rocket fuel” is fine. Exact terminology is not required.",
+      source: "lunar"
+    };
+
+    // SETTINGS
+
+    const key = "starpath-classroom-jeopardy-v3";
+
+    const defaultNames = [
+      "TEAM SSS",
+      "TEAM XSS",
+      "TEAM MNR",
+      "TEAM JKL"
+    ];
+
+    // Category and row indexes start at zero.
+    const doubles = ["1-2", "2-2"];
+    const doubleDuration = 8000;
+    const doubleLimit = score => score > 0 ? Math.max(1000, score) : 0;
+
+    const fresh = () => ({
+      edition: 4,
+      teams: defaultNames.map(name => ({ name, score: 0 })),
+      played: [],
+      finalDone: false,
+      sessions: {},
+      activeId: null,
+      history: []
+    });
+
+    let state = fresh();
+    let timerId = null;
+    let storageOk = true;
+    let noticeId;
+
+    const esc = value => String(value).replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character]));
+
+    const money = amount =>
+      `${amount < 0 ? "−" : ""}$${Math.abs(amount).toLocaleString(
+        "en-US",
+        { useGrouping: false }
+      )}`;
+
+    const active = () =>
+      state.activeId ? state.sessions[state.activeId] : null;
+
+    const question = () =>
+      state.activeId === "final"
+        ? finalClue
+        : clues.find(clue => clue.id === state.activeId);
+
+    // SAVED GAMES
+
+    function validTeams(teams) {
+      return Array.isArray(teams) &&
+        teams.length >= 1 &&
+        teams.length <= 6 &&
+        teams.every(team =>
+          typeof team.name === "string" &&
+          Number.isFinite(team.score)
+        );
+    }
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(key));
+
+      if (saved && validTeams(saved.teams) && Array.isArray(saved.played)) {
+        state = {
+          ...fresh(),
+          ...saved,
+          edition: saved.edition || 0
+        };
+
+        state.sessions = saved.sessions || {};
+        state.history = Array.isArray(saved.history)
+          ? saved.history.slice(-80)
+          : [];
+
+        if (!state.sessions[state.activeId]) {
+          state.activeId = null;
+        }
+      } else {
+        const prior = JSON.parse(
+          localStorage.getItem("starpath-classroom-jeopardy-v2")
+        );
+
+        if (prior && validTeams(prior.teams)) {
+          state.edition = 0;
+          state.teams = defaultNames.map((name, index) => ({
+            name,
+            score: prior.teams[index]?.score || 0
+          }));
+          state.played = Array.isArray(prior.played) ? prior.played : [];
+          state.finalDone = !!prior.finalDone;
+        }
+      }
+
+      state.played = state.played.filter(id =>
+        clues.some(clue => clue.id === id)
+      );
+    } catch {
+      // Start fresh when stored data cannot be read.
+    }
+
+    // Compatibility with older saved versions of the game.
+    if (state.edition < 4) {
+      const migrate = snapshot => {
+        snapshot.teams = defaultNames.map((name, index) => ({
+          name,
+          score: snapshot.teams?.[index]?.score || 0
+        }));
+
+        snapshot.played = (snapshot.played || [])
+          .filter(id => id !== "2-4");
+
+        if (snapshot.sessions) {
+          delete snapshot.sessions["2-4"];
+        }
+
+        if (snapshot.activeId === "2-4") {
+          snapshot.activeId = null;
+        }
+
+        snapshot.edition = 4;
+      };
+
+      migrate(state);
+      state.history.forEach(migrate);
+    }
+
+    function notify(text) {
+      $("#notice").textContent = text;
+      clearTimeout(noticeId);
+      noticeId = setTimeout(() => {
+        $("#notice").textContent = "";
+      }, 2500);
+    }
+
+    function save() {
+      try {
+        localStorage.setItem(key, JSON.stringify(state));
+      } catch {
+        if (storageOk) {
+          storageOk = false;
+          notify("Keep this tab open. Browser saving is unavailable.");
+        }
+      }
+    }
+
+    function checkpoint() {
+      const { history, ...snapshot } = state;
+      state.history.push(JSON.parse(JSON.stringify(snapshot)));
+
+      if (state.history.length > 80) {
+        state.history.shift();
+      }
+    }
+
+    // BOARD
+
+    function scoreHTML() {
+      return state.teams.map(team => `
+        <div class="score-card">
+          <span class="score-name">${esc(team.name)}</span>
+          <strong class="score-value ${team.score < 0 ? "negative" : ""}">
+            ${money(team.score)}
+          </strong>
+        </div>
+      `).join("");
+    }
+
+    function renderBoard() {
+      const pending = pendingWager();
+
+      $("#main").innerHTML = `
+        <div class="round-heading">
+          <span>ROUND 1</span>
+          <span>${state.played.length} / 25</span>
+        </div>
+
+        ${pending ? `
+          <div class="pending-wager">
+            <button id="resumeWagerBtn" class="primary">
+              Resume ${pending.mode === "final"
+                ? "Final Jeopardy"
+                : "Daily Double"}
+            </button>
+          </div>
+        ` : ""}
+
+        <section id="board" class="board" aria-label="Jeopardy board">
+          ${categories.map((category, categoryIndex) => `
+            <div class="category">
+              <h2>${esc(category.name)}</h2>
+
+              ${clues
+                .filter(clue => clue.id.startsWith(categoryIndex + "-"))
+                .map(clue => {
+                  const used = state.played.includes(clue.id);
+
+                  return `
+                    <button
+                      class="tile ${used ? "used" : ""}"
+                      data-clue="${clue.id}"
+                      ${used ? "disabled" : ""}
+                      aria-label="${esc(category.name)} for ${clue.value}${used ? ", played" : ""}"
+                    >${used ? "" : money(clue.value)}</button>
+                  `;
+                }).join("")}
+            </div>
+          `).join("")}
+        </section>
+
+        <section aria-label="Team scores" id="scores" class="scores">
+          ${scoreHTML()}
+        </section>
+
+        <footer>
+          <div>
+            <button
+              id="undoBtn"
+              class="quiet"
+              ${state.history.length ? "" : "disabled"}
+            >↶ Undo</button>
+            <button id="sourcesBtn" class="quiet">Sources</button>
+          </div>
+
+          <button id="finalBtn" class="primary">
+            Final Jeopardy${state.finalDone ? " ✓" : ""}
+          </button>
+        </footer>
+      `;
+
+      document.querySelectorAll("[data-clue]").forEach(button => {
+        button.onclick = () => openClue(button.dataset.clue);
+      });
+
+      $("#undoBtn").onclick = undo;
+      $("#finalBtn").onclick = openFinal;
+      $("#sourcesBtn").onclick = showSources;
+
+      if (pending) {
+        $("#resumeWagerBtn").onclick = resumeWager;
+      }
+    }
+
+    // CLUE SESSIONS
+
+    function newSession(id) {
+      const mode = id === "final"
+        ? "final"
+        : doubles.includes(id) ? "double" : "normal";
+
+      return {
+        id,
+        mode,
+        stage: mode === "normal" ? "question" : "bid",
+        answerShown: false,
+        team: 0,
+        bids: state.teams.map(team => team.score <= 0 ? "0" : ""),
+        bases: state.teams.map(team => team.score),
+        applied: state.teams.map(() => false),
+        deadline: null,
+        responded: false,
+        expired: false,
+        duration: doubleDuration,
+        remaining: doubleDuration
+      };
+    }
+
+    function pendingWager() {
+      return Object.values(state.sessions).find(session =>
+        session.mode !== "normal" &&
+        session.stage === "question" &&
+        !(session.id === "final"
+          ? state.finalDone
+          : state.played.includes(session.id))
+      );
+    }
+
+    function wagerSettled(session) {
+      const required = session.mode === "double"
+        ? [session.team]
+        : state.teams.map((_, index) => index);
+
+      return session.mode !== "normal" &&
+        required.every(index =>
+          session.applied[index] || Number(session.bids[index]) === 0
+        );
+    }
+
+    function resumeWager() {
+      const session = pendingWager();
+      if (active() || !session) return false;
+
+      state.activeId = session.id;
+      save();
+      renderDialog();
+      return true;
+    }
+
+    function openClue(id) {
+      if (
+        active() ||
+        !clues.some(clue => clue.id === id) ||
+        state.played.includes(id)
+      ) return false;
+
+      const pending = pendingWager();
+
+      if (pending && pending.id !== id) {
+        resumeWager();
+        notify("Score this bet, or choose Skip.");
+        return false;
+      }
+
+      state.sessions[id] ??= newSession(id);
+      state.activeId = id;
+      save();
+      renderDialog();
+      return true;
+    }
+
+    function openFinal() {
+      if (active()) return false;
+
+      const pending = pendingWager();
+
+      if (pending && pending.id !== "final") {
+        resumeWager();
+        notify("Score this bet, or choose Skip.");
+        return false;
+      }
+
+      state.sessions.final ??= newSession("final");
+      state.activeId = "final";
+      save();
+      renderDialog();
+      return true;
+    }
+
+    function renderDialog() {
+      const session = active();
+      const clue = question();
+
+      if (!session || !clue) return;
+      clearClock();
+
+      $("#clueLabel").textContent =
+        session.mode === "final"
+          ? `FINAL JEOPARDY · ${clue.category}`
+          : session.mode === "double"
+            ? `DAILY DOUBLE · ${clue.category}`
+            : `${clue.category} · ${money(clue.value)}`;
+
+      $("#clueText").textContent =
+        session.stage === "bid"
+          ? session.mode === "double" ? "Daily Double!" : clue.category
+          : clue.text;
+
+      $("#clueText").classList.toggle(
+        "special-title",
+        session.stage === "bid"
+      );
+
+      $("#answerText").textContent = clue.answer;
+
+      const source = sources[clue.source];
+
+      $("#sourceText").innerHTML = `
+        ${clue.note ? `<p>${esc(clue.note)}</p>` : ""}
+        <p>
+          <a href="${source.evidence}" target="_blank" rel="noopener">
+            ${esc(source.type)}
+          </a>
+        </p>
+      `;
+
+      $("#sourceDetails").open = false;
+      $("#answerPanel").hidden = !session.answerShown;
+      $("#wagerPanel").hidden = session.stage !== "bid";
+      $("#awardRow").hidden = session.stage !== "question";
+      $("#doneBtn").hidden = session.stage !== "question";
+      $("#revealBtn").hidden =
+        session.stage !== "question" || session.answerShown;
+      $("#answeredBtn").hidden = true;
+      $("#countdown").hidden =
+        session.mode !== "double" || session.stage !== "question";
+      $("#clueUndoBtn").disabled = !state.history.length;
+
+      $("#skipBtn").hidden =
+        session.mode === "normal" ||
+        session.skipped ||
+        session.stage !== "question" ||
+        wagerSettled(session);
+
+      $("#skipBtn").disabled = clockRunning();
+
+      if (session.stage === "bid") {
+        renderBids();
+      } else {
+        renderScoring();
+
+        if (session.mode === "double") {
+          startClock();
         } else {
-          const val = reveal ? ((st.rawValues && st.rawValues[ti]) || '') : '';
-          out += `<input type="text" id="inp-${qi}-${bi}-${ti}" data-qi="${qi}" class="sp-blank-input${clsExtra}" style="width:${w}ch" placeholder="?" value="${escapeAttr(val)}" ${disabled} autocomplete="off"/>`;
-          ti++;
+          $("#revealBtn").disabled = false;
         }
-      });
-      return out;
-    }
-    const w = Math.max(8, ((blank.w || 6) + 2) * 2);
-    const val = reveal ? ((st.rawValues && st.rawValues[0]) || '') : '';
-    return `<input type="text" id="inp-${qi}-${bi}-0" data-qi="${qi}" class="sp-blank-input${clsExtra}" style="width:${w}ch" placeholder="?" value="${escapeAttr(val)}" ${disabled} autocomplete="off"/>`;
-  }
-
-  function renderReveal(st, blank){
-    if(st.correct) return '';
-    return `<div class="sp-reveal wrong">Correct answer: ${escapeHtml(blank.accept[0])}</div>`;
-  }
-
-  function renderMC(q, qi, mode, result){
-    const selected = mode === 'reveal' ? (result.blankState[0].value || '') : null;
-    const options = q.options.map((opt, oi) => {
-      let cls = 'sp-mc-option';
-      let disabled = '';
-      if(mode === 'reveal'){
-        disabled = 'disabled';
-        if(opt === q.correct) cls += ' reveal-correct';
-        else if(opt === selected) cls += ' reveal-wrong-pick';
       }
-      return `<button type="button" class="${cls}" data-qi="${qi}" data-mc-value="${escapeAttr(opt)}" ${disabled}>${escapeHtml(opt)}</button>`;
-    }).join('');
-    return `<div class="sp-mc-grid" data-mcgroup="${qi}">${options}</div>`;
-  }
 
-  function renderWordbank(q, qi, mode, result){
-    let selectedSet = null;
-    if(mode === 'reveal'){
-      selectedSet = new Set();
-      result.blankState.forEach(s => { if(s.correct) selectedSet.add(s.value); });
-      // also need the wrong picks the team made — stashed on result.extraPicks
-      (result.extraPicks || []).forEach(v => selectedSet.add(v));
-    }
-    const chips = q.bank.map(word => {
-      let cls = 'sp-bank-chip';
-      let disabled = '';
-      if(mode === 'reveal'){
-        disabled = 'disabled';
-        const isCorrectWord = q.correctSet.includes(word);
-        const wasPicked = (result.pickedSet || []).includes(word);
-        if(isCorrectWord && wasPicked) cls += ' bank-correct-selected';
-        else if(isCorrectWord && !wasPicked) cls += ' bank-correct-missed';
-        else if(!isCorrectWord && wasPicked) cls += ' bank-wrong-selected';
+      if (!$("#clueDialog").open) {
+        $("#clueDialog").showModal();
       }
-      return `<button type="button" class="${cls}" data-qi="${qi}" data-bank-value="${escapeAttr(word)}" ${disabled}>${escapeHtml(word)}</button>`;
-    }).join('');
-    return `<div class="sp-bank-wrap" data-bankgroup="${qi}">${chips}</div>`;
-  }
+    }
 
-  // Renders one question's chip + card. mode 'edit' = play screen (ungraded, live inputs).
-  // mode 'reveal' = reveal screen (graded, read-only, colored, with a feedback banner).
-  function renderQuestionCard(q, qi, mode, result){
-    const color = CAT_COLORS[q.cat] || '#4db8f0';
-    let body = '';
+    // WAGERS
 
-    if(q.mc){
-      if(q.img) body += `<img class="sp-question-img" src="data:image/jpeg;base64,${IMAGES[q.img]}" alt="redacted slide"/>`;
-      body += `<div class="sp-prompt">${escapeHtml(q.prompt)}</div>`;
-      body += renderMC(q, qi, mode, result);
-    } else if(q.wordbank){
-      if(q.img) body += `<img class="sp-question-img" src="data:image/jpeg;base64,${IMAGES[q.img]}" alt="redacted slide"/>`;
-      body += `<div class="sp-prompt">${escapeHtml(q.prompt)}</div>`;
-      body += renderWordbank(q, qi, mode, result);
-    } else if(q.type === 'image'){
-      if(q.img) body += `<img class="sp-question-img" src="data:image/jpeg;base64,${IMAGES[q.img]}" alt="redacted slide"/>`;
-      body += `<div class="sp-prompt">${escapeHtml(q.prompt)}</div>`;
-      if(q.hint) body += `<div class="sp-hint">💡 ${escapeHtml(q.hint)}</div>`;
-      q.blanks.forEach((b, bi) => {
-        // an "extra" image + prompt can be interleaved before one of the blanks
-        // (e.g. a second picture that asks a related, separately-graded question)
-        if(q.extraImg && q.extraAt === bi){
-          body += `<img class="sp-question-img" style="margin-top:18px;" src="data:image/jpeg;base64,${IMAGES[q.extraImg]}" alt="redacted slide"/>`;
-          body += `<div class="sp-prompt">${escapeHtml(q.extraPrompt)}</div>`;
+    function wagerLimit(session, index) {
+      return session.mode === "final"
+        ? Math.max(0, session.bases[index])
+        : doubleLimit(session.bases[index]);
+    }
+
+    function renderBids() {
+      const session = active();
+      session.bases = state.teams.map(team => team.score);
+
+      if (session.mode === "double") {
+        if (state.teams[session.team]?.score <= 0) {
+          const eligible = state.teams.findIndex(team => team.score > 0);
+
+          if (eligible >= 0) {
+            session.team = eligible;
+          }
         }
-        const st = mode === 'reveal' ? result.blankState[bi] : null;
-        body += `<div class="sp-blank-block">
-          <label>${escapeHtml(b.label || ('Blank ' + (bi+1)))}</label>
-          ${blankInputHTML(b, qi, bi, mode, st)}
-          ${(mode==='reveal' && !st.correct) ? renderReveal(st, b) : ''}
-        </div>`;
-      });
-    } else {
-      // text type: inline blanks inside template. Every blank occurrence, in order,
-      // is marked with the literal token %%BLANK%% in the template.
-      let parts = q.template.split('%%BLANK%%');
-      let html = '';
-      if(q.repeat_single){
-        const st = mode === 'reveal' ? result.blankState[0] : null;
-        const echoCls = mode === 'reveal' ? (st.correct ? ' graded-correct' : ' graded-wrong') : '';
-        const echoW = Math.max(8, ((q.blanks[0].w || 8) + 2) * 2);
-        html = escapeHtml(parts[0]);
-        for(let i=1;i<parts.length;i++){
-          const echoVal = mode === 'reveal' ? ((st.rawValues && st.rawValues[0]) || '') : '';
-          html += `<input type="text" class="sp-blank-input${echoCls}" style="width:${echoW}ch" placeholder="?" value="${escapeAttr(echoVal)}" disabled tabindex="-1"/>`;
-          html += escapeHtml(parts[i]);
-        }
-        body += `<div class="sp-quote">${html}</div>`;
-        body += `<div class="sp-blank-block" style="margin-top:16px;">
-          <label>${escapeHtml(q.blanks[0].label || 'Your answer')}</label>
-          ${blankInputHTML(q.blanks[0], qi, 0, mode, st)}
-          ${(mode==='reveal' && !st.correct) ? renderReveal(st, q.blanks[0]) : ''}
-        </div>`;
+
+        const limit = wagerLimit(session, session.team);
+
+        $("#wagerPanel").innerHTML = `
+          <form id="doubleBidForm" class="double-bid">
+            <label>
+              Team
+              <select id="doubleTeam">
+                ${state.teams.map((team, index) => `
+                  <option
+                    value="${index}"
+                    ${session.team === index ? "selected" : ""}
+                    ${team.score <= 0 ? "disabled" : ""}
+                  >
+                    ${esc(team.name)} · ${money(team.score)}
+                  </option>
+                `).join("")}
+              </select>
+            </label>
+
+            <label>
+              ${limit
+                ? `Bet · up to ${money(limit)}`
+                : "Positive balance required"}
+              <input
+                id="doubleAmount"
+                type="number"
+                min="1"
+                max="${limit}"
+                step="1"
+                placeholder="$"
+                ${limit ? "" : "disabled"}
+                required
+              >
+            </label>
+
+            <button
+              class="primary"
+              type="submit"
+              ${limit ? "" : "disabled"}
+            >Lock bet · 8 seconds</button>
+          </form>
+        `;
+
+        $("#doubleTeam").onchange = event => {
+          session.team = Number(event.target.value);
+          renderBids();
+        };
+
+        $("#doubleBidForm").onsubmit = event => {
+          event.preventDefault();
+          lockDouble(session.team, $("#doubleAmount").value);
+        };
       } else {
-        html = escapeHtml(parts[0]);
-        for(let i=1;i<parts.length;i++){
-          const bi = i-1;
-          const st = mode === 'reveal' ? result.blankState[bi] : null;
-          html += blankInputHTML(q.blanks[bi], qi, bi, mode, st);
-          html += escapeHtml(parts[i]);
-        }
-        body += `<div class="sp-quote">${html}</div>`;
-        if(mode === 'reveal'){
-          q.blanks.forEach((b,bi) => {
-            const st = result.blankState[bi];
-            if(!st.correct) body += renderReveal(st, b);
-          });
-        }
+        $("#wagerPanel").innerHTML = `
+          <form id="finalBidForm">
+            <div class="bid-grid">
+              ${state.teams.map((team, index) => `
+                <label class="bid-card">
+                  <strong>${esc(team.name)}</strong>
+                  <span>
+                    Available ${money(Math.max(0, session.bases[index]))}
+                  </span>
+                  <input
+                    data-bid="${index}"
+                    aria-label="${esc(team.name)} bid"
+                    type="number"
+                    min="0"
+                    max="${wagerLimit(session, index)}"
+                    step="1"
+                    value="${esc(session.bids[index])}"
+                    placeholder="$"
+                    ${session.bases[index] <= 0 ? "readonly" : ""}
+                    required
+                  >
+                </label>
+              `).join("")}
+            </div>
+
+            <button class="primary" type="submit">
+              Lock bids · Show question
+            </button>
+          </form>
+        `;
+
+        document.querySelectorAll("[data-bid]").forEach(input => {
+          input.oninput = () => {
+            session.bids[Number(input.dataset.bid)] = input.value;
+          };
+        });
+
+        $("#finalBidForm").onsubmit = event => {
+          event.preventDefault();
+          lockFinal(session.bids);
+        };
       }
     }
 
-    let feedback = '';
-    if(mode === 'reveal'){
-      const correctCount = result.blankState.filter(s=>s.correct).length;
-      const totalBlanks = result.blankState.length;
-      let cls = 'all-wrong', msg = 'Not quite — see the answer above.';
-      if(correctCount === totalBlanks){ cls='all-correct'; msg = 'Correct! +' + result.gained + ' pts'; }
-      else if(correctCount > 0){ cls='partial'; msg = `Partial credit — ${correctCount}/${totalBlanks} correct (+${result.gained} pts)`; }
-      feedback = `<div class="sp-feedback-banner ${cls}">${msg}</div>`;
+    function lockDouble(team, raw) {
+      const session = active();
+
+      if (
+        !session ||
+        session.mode !== "double" ||
+        session.stage !== "bid" ||
+        !Number.isInteger(team) ||
+        !state.teams[team]
+      ) return false;
+
+      const amount = Number(raw);
+
+      if (
+        raw === "" ||
+        !Number.isInteger(amount) ||
+        amount < 1 ||
+        amount > doubleLimit(state.teams[team].score)
+      ) {
+        notify("Check the bet amount.");
+        return false;
+      }
+
+      session.team = team;
+      session.bids[team] = amount;
+      session.stage = "question";
+      session.duration = doubleDuration;
+      session.deadline = Date.now() + doubleDuration;
+      session.remaining = doubleDuration;
+
+      save();
+      renderDialog();
+      return true;
     }
 
-    return `
-      <div class="sp-chip" style="color:${color}">${escapeHtml(q.cat)}</div>
-      <div class="sp-card">
-        ${body}
-        ${feedback}
-      </div>
-    `;
-  }
+    function lockFinal(raw) {
+      const session = active();
 
-  function screenPlayAll(){
-    const total = QUESTIONS.length;
-    let cards = '';
-    QUESTIONS.forEach((q, qi) => {
-      cards += `<div class="sp-qgroup" data-qgroup="${qi}">${renderQuestionCard(q, qi, 'edit', null)}</div>`;
-    });
-    return `
-      <div class="sp-topbar">
-        <button class="sp-back" data-action="quit-play">← QUIT</button>
-        <span class="sp-score-badge" id="answered-badge">0 / ${total} answered</span>
-      </div>
-      ${cards}
-      <div class="sp-card sp-submit-bar">
-        <button class="sp-btn yellow wide" data-action="submit-all">Submit Final Answers</button>
-      </div>
-    `;
-  }
+      if (
+        !session ||
+        session.mode !== "final" ||
+        session.stage !== "bid" ||
+        !Array.isArray(raw) ||
+        raw.length !== state.teams.length
+      ) return false;
 
-  function screenReveal(){
-    const total = QUESTIONS.length;
-    const qi = state.revealIndex;
-    const q = QUESTIONS[qi];
-    const result = state.results[qi];
-    const scoreSoFar = state.results.slice(0, qi+1).reduce((s,r)=>s+r.gained,0);
-    const pct = Math.round(((qi+1)/total)*100);
-    const isLast = qi === total - 1;
-    return `
-      <div class="sp-topbar">
-        <span class="sp-chip" style="color:#4db8f0; margin-bottom:0;">REVEAL</span>
-        <span class="sp-score-badge">SCORE SO FAR: ${scoreSoFar} / ${MAX_SCORE}</span>
-      </div>
-      <div class="sp-progress-row">
-        <div class="sp-progress-track"><div class="sp-progress-fill" style="width:${pct}%"></div></div>
-        <span class="sp-score-badge">Q${qi+1}/${total}</span>
-      </div>
-      ${renderQuestionCard(q, qi, 'reveal', result)}
-      <div class="sp-btn-row">
-        <button class="sp-btn primary wide" data-action="reveal-next">${isLast ? 'See Final Results →' : 'Next Reveal →'}</button>
-      </div>
-    `;
-  }
+      const bids = raw.map(Number);
 
-  function screenSummary(){
-    let rows = '';
-    QUESTIONS.forEach((q, qi) => {
-      const r = state.results[qi];
-      const bs = r.blankState;
-      const correctCount = bs.filter(s=>s.correct).length;
-      const icon = correctCount === bs.length ? '✅' : (correctCount>0 ? '⚠️' : '❌');
-      const answerText = bs.map(s=>s.value || '(blank)').join(', ');
-      const correctText = q.mc ? q.correct : (q.wordbank ? q.correctSet.join(', ') : q.blanks.map(b=>b.accept[0]).join(', '));
-      rows += `<div class="sp-review-row">
-        <div class="sp-review-icon">${icon}</div>
-        <div class="sp-review-body">
-          <b>${escapeHtml(q.cat)}</b> — you said: "${escapeHtml(answerText)}"${correctCount<bs.length ? ' · answer: "'+escapeHtml(correctText)+'"' : ''}
-        </div>
-      </div>`;
-    });
-    const timeStr = formatTime(elapsedFrozenSec != null ? elapsedFrozenSec : 0);
-    return `
-      <div class="sp-shot-banner">📸 SCREENSHOT THIS SCREEN and show it to your host!</div>
-      <div class="sp-results-card" style="text-align:center;">
-        <div class="sp-chip" style="color:#4db8f0;">MISSION COMPLETE — ${escapeHtml(state.teamName)}</div>
-        <div class="sp-summary-score">${state.totalScore}</div>
-        <div class="sp-summary-total">out of ${MAX_SCORE} points</div>
-        <div class="sp-summary-time">Time elapsed: <b>${timeStr}</b></div>
-        <div class="sp-btn-row" style="margin-top:8px;">
-          <button class="sp-btn primary" data-action="go-landing">Play Again</button>
-        </div>
-      </div>
-      <div class="sp-card">
-        <div class="sp-chip" style="color:#9aa4aa;">ANSWER REVIEW</div>
-        ${rows}
-      </div>
-    `;
-  }
+      if (bids.some((bid, index) =>
+        raw[index] === "" ||
+        !Number.isInteger(bid) ||
+        bid < 0 ||
+        bid > Math.max(0, state.teams[index].score)
+      )) {
+        notify("Bids must fit each team’s available money.");
+        return false;
+      }
 
-  function escapeHtml(s){
-    return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-  }
-  function escapeAttr(s){ return escapeHtml(s); }
+      session.bids = bids;
+      session.bases = state.teams.map(team => team.score);
+      session.stage = "question";
 
-  // ---------------- play -> grading ----------------
-  function startPlay(teamName){
-    state.teamName = teamName;
-    state.screen = 'play';
-    startTimer(teamName);
-  }
+      save();
+      renderDialog();
+      return true;
+    }
 
-  function collectBlankValue(q, qi, bi){
-    const blank = q.repeat_single ? q.blanks[0] : q.blanks[bi];
-    if(blank.tokens){
-      let ti = 0, raw = [];
-      blank.tokens.forEach(tok => {
-        if(!tok.lit){
-          const el = document.getElementById(`inp-${qi}-${bi}-${ti}`);
-          raw.push(el ? el.value : '');
-          ti++;
-        }
+    // EIGHT-SECOND ANSWER BAR
+
+    function clearClock() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+      }
+
+      timerId = null;
+    }
+
+    function clockRunning() {
+      const session = active();
+
+      return !!(
+        session &&
+        session.mode === "double" &&
+        session.stage === "question" &&
+        !session.responded &&
+        !session.expired &&
+        session.deadline > Date.now()
+      );
+    }
+
+    function tick() {
+      const session = active();
+
+      if (
+        !session ||
+        session.mode !== "double" ||
+        session.stage !== "question"
+      ) return;
+
+      // Older saved wagers may have used a six-second deadline.
+      const duration = session.duration || 6000;
+
+      const milliseconds = Math.min(
+        duration,
+        session.responded
+          ? session.remaining
+          : Math.max(0, (session.deadline || 0) - Date.now())
+      );
+
+      if (!session.responded && milliseconds <= 0 && !session.expired) {
+        session.expired = true;
+        session.remaining = 0;
+        save();
+        clearClock();
+        renderScoring();
+      }
+
+      $("#countdownFill").style.transform =
+        `scaleX(${milliseconds / duration})`;
+
+      $("#countdown").setAttribute(
+        "aria-valuemax",
+        String(duration / 1000)
+      );
+
+      $("#countdown").setAttribute(
+        "aria-valuenow",
+        String(Math.ceil(milliseconds / 100) / 10)
+      );
+
+      $("#countdown").setAttribute(
+        "aria-valuetext",
+        session.expired
+          ? "Time expired"
+          : session.responded
+            ? "Answer received"
+            : `${Math.ceil(milliseconds / 1000)} seconds remaining`
+      );
+
+      $("#answeredBtn").hidden = session.responded || session.expired;
+      $("#revealBtn").disabled = clockRunning();
+      $("#doneBtn").disabled = clockRunning();
+      $("#skipBtn").disabled = clockRunning();
+    }
+
+    function startClock() {
+      tick();
+
+      if (clockRunning()) {
+        timerId = setInterval(tick, 25);
+      }
+    }
+
+    function answered() {
+      const session = active();
+
+      if (!session || !clockRunning()) {
+        tick();
+        return false;
+      }
+
+      session.remaining = Math.max(0, session.deadline - Date.now());
+      session.responded = true;
+
+      clearClock();
+      save();
+      tick();
+      renderScoring();
+      return true;
+    }
+
+    function reveal() {
+      const session = active();
+
+      if (
+        !session ||
+        session.stage !== "question" ||
+        clockRunning()
+      ) return false;
+
+      session.answerShown = true;
+      $("#answerPanel").hidden = false;
+      $("#revealBtn").hidden = true;
+      save();
+      return true;
+    }
+
+    // SCORING
+
+    function renderScoring() {
+      const session = active();
+      const clue = question();
+
+      if (!session || session.stage !== "question") return;
+
+      const indices = session.mode === "double"
+        ? [session.team]
+        : state.teams.map((_, index) => index);
+
+      $("#awardRow").innerHTML = indices.map(index => {
+        const team = state.teams[index];
+
+        const amount = session.mode === "normal"
+          ? clue.value
+          : Number(session.bids[index]);
+
+        const disabled =
+          session.applied[index] ||
+          session.skipped ||
+          clockRunning();
+
+        return `
+          <div class="award-team">
+            <div class="team-score-heading">
+              <strong>${esc(team.name)}</strong>
+              <span>${money(team.score)}</span>
+            </div>
+
+            <div class="money-controls">
+              <button
+                class="negative-button"
+                data-minus="${index}"
+                ${disabled ? "disabled" : ""}
+                aria-label="Subtract ${money(amount)} from ${esc(team.name)}"
+              >−${money(amount)}</button>
+
+              <button
+                class="positive"
+                data-plus="${index}"
+                ${disabled ? "disabled" : ""}
+                aria-label="Add ${money(amount)} to ${esc(team.name)}"
+              >+${money(amount)}</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-plus]").forEach(button => {
+        button.onclick = () =>
+          adjustScore(Number(button.dataset.plus), 1);
       });
-      const value = raw.filter(v => v && v.trim()).join(' ');
-      return { value, rawValues: raw };
-    }
-    const el = document.getElementById(`inp-${qi}-${bi}-0`);
-    const v = el ? el.value : '';
-    return { value: v, rawValues: [v] };
-  }
 
-  function getSelectedMC(qi){
-    const el = document.querySelector(`.sp-mc-option.selected[data-qi="${qi}"]`);
-    return el ? el.dataset.mcValue : null;
-  }
-  function getSelectedBank(qi){
-    const els = document.querySelectorAll(`.sp-bank-chip.selected[data-qi="${qi}"]`);
-    return Array.from(els).map(el => el.dataset.bankValue);
-  }
-
-  function gradeQuestion(q, qi){
-    if(q.mc){
-      const selected = getSelectedMC(qi);
-      const correct = selected != null && selected === q.correct;
-      return { blankState: [{ value: selected || '(no answer)', rawValues:[selected||''], graded:true, correct }], gained: correct ? (q.maxPoints||1) : 0 };
-    }
-    if(q.wordbank){
-      const picked = getSelectedBank(qi);
-      const pickedSet = new Set(picked);
-      let gained = 0;
-      const blankState = q.correctSet.map(word => {
-        const correct = pickedSet.has(word);
-        if(correct) gained += 1;
-        return { value: correct ? word : '', rawValues:[correct?word:''], graded:true, correct };
+      document.querySelectorAll("[data-minus]").forEach(button => {
+        button.onclick = () =>
+          adjustScore(Number(button.dataset.minus), -1);
       });
-      const extraPicks = picked.filter(w => !q.correctSet.includes(w));
-      return { blankState, gained, pickedSet: picked, extraPicks };
-    }
-    if(q.repeat_single){
-      const c = collectBlankValue(q, qi, 0);
-      const correct = isCorrect(c.value, q.blanks[0]);
-      const gained = correct ? (q.blanks[0].points || 1) : 0;
-      return { blankState: [{ value:c.value, rawValues:c.rawValues, graded:true, correct }], gained };
-    }
-    if(q.unordered){
-      const collected = q.blanks.map((b, bi) => collectBlankValue(q, qi, bi));
-      const used = new Set();
-      const matched = collected.map(() => false);
-      collected.forEach((c, vi) => {
-        for(let bj=0; bj<q.blanks.length; bj++){
-          if(used.has(bj)) continue;
-          if(isCorrect(c.value, q.blanks[bj])){ used.add(bj); matched[vi] = true; break; }
-        }
-      });
-      let gained = 0;
-      const blankState = collected.map((c, bi) => {
-        const correct = matched[bi];
-        if(correct) gained += (q.blanks[bi].points || 1);
-        return { value:c.value, rawValues:c.rawValues, graded:true, correct };
-      });
-      return { blankState, gained };
-    }
-    let gained = 0;
-    const blankState = q.blanks.map((b, bi) => {
-      const c = collectBlankValue(q, qi, bi);
-      const correct = isCorrect(c.value, b);
-      if(correct) gained += (b.points || 1);
-      return { value:c.value, rawValues:c.rawValues, graded:true, correct };
-    });
-    return { blankState, gained };
-  }
 
-  function isQuestionAnswered(q, qi){
-    if(q.mc) return getSelectedMC(qi) != null;
-    if(q.wordbank) return getSelectedBank(qi).length > 0;
-    const inputs = document.querySelectorAll(`[data-qi="${qi}"]`);
-    let any = false;
-    inputs.forEach(inp => { if(inp.value && inp.value.trim()) any = true; });
-    return any;
-  }
+      $("#clueUndoBtn").disabled = !state.history.length;
+      $("#doneBtn").disabled = clockRunning();
 
-  function countUnanswered(){
-    let unanswered = 0;
-    QUESTIONS.forEach((q, qi) => { if(!isQuestionAnswered(q, qi)) unanswered++; });
-    return unanswered;
-  }
+      $("#skipBtn").hidden =
+        session.mode === "normal" ||
+        session.skipped ||
+        wagerSettled(session);
 
-  function submitAll(){
-    const unanswered = countUnanswered();
-    if(unanswered > 0){
-      const ok = confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`);
-      if(!ok) return;
+      $("#skipBtn").disabled = clockRunning();
     }
-    stopTimer();
-    const results = QUESTIONS.map((q, qi) => gradeQuestion(q, qi));
-    const totalScore = results.reduce((s,r) => s + r.gained, 0);
-    state.screen = 'reveal';
-    state.results = results;
-    state.totalScore = totalScore;
-    state.revealIndex = 0;
-    render();
-  }
 
-  function updateAnsweredBadge(){
-    const badge = document.getElementById('answered-badge');
-    if(!badge) return;
-    let answered = 0;
-    QUESTIONS.forEach((q, qi) => { if(isQuestionAnswered(q, qi)) answered++; });
-    badge.textContent = answered + ' / ' + QUESTIONS.length + ' answered';
-  }
+    function adjustScore(index, direction) {
+      const session = active();
+      const clue = question();
 
-  function wireEvents(){
-    document.querySelectorAll('[data-action]').forEach(el => {
-      el.addEventListener('click', onAction);
-    });
-    if(state.screen === 'play'){
-      document.querySelectorAll('input[data-qi]').forEach(el => {
-        el.addEventListener('input', updateAnsweredBadge);
-      });
-      document.querySelectorAll('.sp-mc-option').forEach(el => {
-        el.addEventListener('click', () => {
-          const qi = el.dataset.qi;
-          document.querySelectorAll(`.sp-mc-option[data-qi="${qi}"]`).forEach(sib => sib.classList.remove('selected'));
-          el.classList.add('selected');
-          updateAnsweredBadge();
-        });
-      });
-      document.querySelectorAll('.sp-bank-chip').forEach(el => {
-        el.addEventListener('click', () => {
-          el.classList.toggle('selected');
-          updateAnsweredBadge();
-        });
-      });
-      updateAnsweredBadge();
-    }
-  }
+      if (
+        !session ||
+        session.skipped ||
+        session.stage !== "question" ||
+        clockRunning() ||
+        !state.teams[index] ||
+        ![1, -1].includes(direction) ||
+        (session.mode === "double" && index !== session.team) ||
+        (session.mode !== "normal" && session.applied[index])
+      ) return false;
 
-  function onAction(e){
-    const action = e.currentTarget.dataset.action;
-    if(action === 'go-landing'){ state = {screen:'landing'}; hideTimer(); render(); return; }
-    if(action === 'select-team-inline'){
-      document.querySelectorAll('.sp-team-btn').forEach(sib => sib.classList.remove('selected'));
-      e.currentTarget.classList.add('selected');
-      return;
+      const amount = session.mode === "normal"
+        ? clue.value
+        : Number(session.bids[index]);
+
+      if (!Number.isInteger(amount) || amount < 0) return false;
+
+      checkpoint();
+      state.teams[index].score += direction * amount;
+
+      if (session.mode !== "normal") {
+        session.applied[index] = true;
+      }
+
+      save();
+      renderBoard();
+      renderScoring();
+      return true;
     }
-    if(action === 'start-game'){
-      const selectedBtn = document.querySelector('.sp-team-btn.selected');
-      const team = selectedBtn ? selectedBtn.dataset.team : TEAMS[0];
-      startPlay(team);
-      render();
-      return;
+
+    function completeClue(skipped = false) {
+      const session = active();
+      checkpoint();
+
+      if (skipped) {
+        session.skipped = true;
+      }
+
+      if (session.id === "final") {
+        state.finalDone = true;
+      } else if (!state.played.includes(session.id)) {
+        state.played.push(session.id);
+      }
+
+      state.activeId = null;
+      save();
+      clearClock();
+      $("#clueDialog").close();
+      renderBoard();
+      return true;
     }
-    if(action === 'submit-all'){ submitAll(); return; }
-    if(action === 'reveal-next'){
-      if(state.revealIndex === QUESTIONS.length - 1){
-        state.screen = 'summary';
+
+    function finishClue() {
+      const session = active();
+
+      if (
+        !session ||
+        session.stage !== "question" ||
+        clockRunning()
+      ) return false;
+
+      if (
+        session.mode !== "normal" &&
+        !session.skipped &&
+        !wagerSettled(session)
+      ) {
+        notify("Use + / − to score, or Skip.");
+        return false;
+      }
+
+      return completeClue();
+    }
+
+    function skipClue() {
+      const session = active();
+
+      if (
+        !session ||
+        session.skipped ||
+        session.mode === "normal" ||
+        session.stage !== "question" ||
+        clockRunning()
+      ) return false;
+
+      return completeClue(true);
+    }
+
+    function closeClue() {
+      const session = active();
+
+      if (clockRunning()) {
+        notify("The answer bar is still running.");
+        return false;
+      }
+
+      if (
+        session &&
+        session.stage === "question" &&
+        wagerSettled(session)
+      ) {
+        return finishClue();
+      }
+
+      clearClock();
+      state.activeId = null;
+      save();
+      $("#clueDialog").close();
+      renderBoard();
+      return true;
+    }
+
+    function undo() {
+      if (!state.history.length || clockRunning()) return;
+
+      clearClock();
+
+      const previous = state.history.pop();
+      const history = state.history;
+      state = { ...previous, history };
+
+      save();
+      renderBoard();
+
+      if (active()) {
+        renderDialog();
       } else {
-        state.revealIndex += 1;
+        $("#clueDialog").close();
       }
-      render();
-      return;
     }
-    if(action === 'quit-play'){
-      if(confirm('Quit this briefing and lose your answers?')) { state = {screen:'landing'}; hideTimer(); render(); }
-      return;
-    }
-  }
 
-  render();
-})();
-</script>
+    // TEAM SETTINGS AND RESET
+
+    function panel(title, html) {
+      $("#panelTitle").textContent = title;
+      $("#panelContent").innerHTML = html;
+      $("#panelDialog").showModal();
+    }
+
+    function closePanel() {
+      $("#panelDialog").close();
+    }
+
+    function setup() {
+      if (pendingWager()) {
+        resumeWager();
+        notify("Score this bet, or choose Skip.");
+        return;
+      }
+
+      panel("Teams", `
+        <form id="settingsForm">
+          <label class="field">
+            Teams
+            <select id="teamCount">
+              ${[1, 2, 3, 4, 5, 6].map(number => `
+                <option ${number === state.teams.length ? "selected" : ""}>
+                  ${number}
+                </option>
+              `).join("")}
+            </select>
+          </label>
+
+          <div class="team-field-labels">
+            <span>Name</span>
+            <span>Score</span>
+          </div>
+
+          <div id="teamFields"></div>
+
+          <div class="form-actions">
+            <button type="button" id="newGameBtn" class="danger">
+              Reset game
+            </button>
+            <button type="submit" class="primary">Save</button>
+          </div>
+        </form>
+      `);
+
+      const staged = Array.from({ length: 6 }, (_, index) => ({
+        ...(state.teams[index] || {
+          name: defaultNames[index] ||
+            `TEAM ${String.fromCharCode(65 + index)}`,
+          score: 0
+        })
+      }));
+
+      function fields() {
+        const count = Number($("#teamCount").value);
+
+        $("#teamFields").innerHTML = staged
+          .slice(0, count)
+          .map((team, index) => `
+            <div class="field">
+              <input
+                type="text"
+                id="name${index}"
+                aria-label="Team ${index + 1} name"
+                maxlength="24"
+                value="${esc(team.name)}"
+                required
+              >
+
+              <input
+                type="number"
+                id="score${index}"
+                aria-label="Team ${index + 1} score"
+                value="${team.score}"
+                step="1"
+                min="-1000000"
+                max="1000000"
+                required
+              >
+            </div>
+          `).join("");
+
+        document.querySelectorAll("#teamFields input").forEach(input => {
+          input.oninput = () => {
+            const index = Number(input.id.replace(/\D/g, ""));
+
+            if (input.id.startsWith("name")) {
+              staged[index].name = input.value;
+            } else {
+              staged[index].score = Number(input.value);
+            }
+          };
+        });
+      }
+
+      fields();
+      $("#teamCount").onchange = fields;
+
+      $("#settingsForm").onsubmit = event => {
+        event.preventDefault();
+
+        const teams = staged.slice(0, Number($("#teamCount").value));
+
+        if (teams.some(team =>
+          !team.name.trim() ||
+          !Number.isInteger(team.score) ||
+          Math.abs(team.score) > 1000000
+        )) return;
+
+        checkpoint();
+
+        state.teams = teams.map(team => ({
+          ...team,
+          name: team.name.trim()
+        }));
+
+        for (const [id, session] of Object.entries(state.sessions)) {
+          if (session.stage === "bid") {
+            delete state.sessions[id];
+          }
+        }
+
+        save();
+        closePanel();
+        renderBoard();
+      };
+
+      $("#newGameBtn").onclick = confirmReset;
+    }
+
+    function confirmReset() {
+      closePanel();
+
+      panel("Reset scores and board?", `
+        <div class="form-actions">
+          <button id="cancelReset">Cancel</button>
+          <button id="confirmReset" class="primary">Reset</button>
+        </div>
+      `);
+
+      $("#cancelReset").onclick = closePanel;
+
+      $("#confirmReset").onclick = () => {
+        checkpoint();
+
+        const { history, teams } = state;
+
+        state = {
+          ...fresh(),
+          history,
+          teams: teams.map(team => ({ ...team, score: 0 }))
+        };
+
+        save();
+        closePanel();
+        renderBoard();
+      };
+    }
+
+    function showSources() {
+      panel("Sources", `
+        <p>
+          <a href="${sources.lunar.url}" target="_blank" rel="noopener">
+            Lunar Ice Mining For Multiplanetary Travel
+          </a>
+        </p>
+
+        <p>
+          <a href="${sources.mars.url}" target="_blank" rel="noopener">
+            Relentless: A city on Mars
+          </a>
+        </p>
+
+        <p>
+          <a href="https://www.starpath.space/" target="_blank" rel="noopener">
+            Starpath.space
+          </a>
+        </p>
+
+        <p class="small">
+          Podcast clues use published notes and excerpts; full transcripts
+          were unavailable. Additional clues use Starpath’s website and
+          NASA science background.
+        </p>
+
+        <p class="small">
+          <a href="${sources.lunar.evidence}" target="_blank" rel="noopener">
+            Sourcery notes
+          </a>
+          ·
+          <a href="${sources.mars.evidence}" target="_blank" rel="noopener">
+            Relentless excerpt
+          </a>
+          ·
+          <a href="${sources.nasa.url}" target="_blank" rel="noopener">
+            NASA
+          </a>
+        </p>
+      `);
+    }
+
+    // CONTROLS
+
+    $("#setupBtn").onclick = setup;
+    $("#closePanel").onclick = closePanel;
+    $("#closeClue").onclick = closeClue;
+    $("#revealBtn").onclick = reveal;
+    $("#answeredBtn").onclick = answered;
+    $("#doneBtn").onclick = finishClue;
+    $("#skipBtn").onclick = skipClue;
+    $("#clueUndoBtn").onclick = undo;
+
+    $("#clueDialog").addEventListener("cancel", event => {
+      event.preventDefault();
+      closeClue();
+    });
+
+    $("#fullscreenBtn").onclick = async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          notify("Use your browser’s full-screen control.");
+        }
+      } catch {
+        notify("Use your browser’s full-screen control.");
+      }
+    };
+
+    document.addEventListener("keydown", event => {
+      if (
+        event.key.toLowerCase() === "r" &&
+        active() &&
+        !["INPUT", "TEXTAREA", "SELECT"].includes(event.target.tagName)
+      ) {
+        event.preventDefault();
+        reveal();
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (active()?.mode === "double") tick();
+    });
+
+    window.addEventListener("focus", () => {
+      if (active()?.mode === "double") tick();
+    });
+
+    // START
+
+    renderBoard();
+    if (active()) renderDialog();
+    save();
+
+    // Optional browser integration. The game works without this API.
+    if (document.modelContext?.registerTool) {
+      const lifecycle = new AbortController();
+
+      const register = tool => {
+        try {
+          Promise.resolve(
+            document.modelContext.registerTool(
+              tool,
+              { signal: lifecycle.signal }
+            )
+          ).catch(() => {});
+        } catch {}
+      };
+
+      register({
+        name: "read_starpath_game",
+        title: "Read game",
+        description: "Read team scores and the board without revealing answers or hidden Daily Double locations.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          additionalProperties: false
+        },
+        annotations: { readOnlyHint: true },
+        execute: () => ({
+          teams: state.teams,
+          played: state.played,
+          finalDone: state.finalDone,
+          categories: categories.map(category => category.name)
+        })
+      });
+
+      register({
+        name: "open_starpath_clue",
+        title: "Open a clue",
+        description: "Open an unplayed clue or its Daily Double bidding screen, without revealing answers or changing scores.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            clueId: {
+              type: "string",
+              enum: clues.map(clue => clue.id)
+            }
+          },
+          required: ["clueId"],
+          additionalProperties: false
+        },
+        execute: input => {
+          if (
+            !input ||
+            typeof input.clueId !== "string" ||
+            active() ||
+            $("#panelDialog").open ||
+            !openClue(input.clueId)
+          ) {
+            throw new Error("Choose an available clue.");
+          }
+
+          return {
+            id: state.activeId,
+            stage: active().stage,
+            ...(active().stage === "question"
+              ? {
+                  text: question().text,
+                  value: question().value
+                }
+              : {})
+          };
+        }
+      });
+
+      window.addEventListener(
+        "pagehide",
+        () => lifecycle.abort(),
+        { once: true }
+      );
+    }
+  </script>
+</body>
+</html>
